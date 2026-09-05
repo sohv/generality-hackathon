@@ -19,7 +19,8 @@ plt.rcParams.update({
 })
 PALETTE = ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3"]
 THRESHOLDS = [20, 40, 60, 80]
-CEILING = 0.98
+CEILING = 0.98  # baseline is exactly 100% (0 errors in 1200 items), so any deviation counts
+MIN_N = 5  # conditional means below this many rollouts are shown as raw points, not estimates
 SERIES = [("ambiguous", "Ambiguous", PALETTE[0], "-", "o"),
           ("disambiguated", "Disambiguated", PALETTE[1], "--", "s"),
           ("eval_aware", "Eval-aware", PALETTE[3], "-.", "D"),
@@ -32,7 +33,7 @@ def boot_ci(xs, n=10000, alpha=0.01, seed=0):
     return ms[int(alpha / 2 * n)], ms[int((1 - alpha / 2) * n)]
 
 
-def main(path, out_name="fig_sweep_decomposed"):
+def main(path, out_name="fig_sweep_decomposed", min_n=MIN_N):
     rows = [json.loads(l) for l in Path(path).open()]
     by = {}
     for r in rows:
@@ -41,6 +42,7 @@ def main(path, out_name="fig_sweep_decomposed"):
         by.setdefault(r["cell"].replace("disambig_", "disambiguated_"), []).append(r["accuracy"])
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.4, 4.9))
+    empty_note: list[str] = []
     xs = [t / 100 for t in THRESHOLDS]
 
     for pre, label, colour, ls, marker in SERIES:
@@ -57,13 +59,31 @@ def main(path, out_name="fig_sweep_decomposed"):
         ax1.plot(xs, ps, ls=ls, lw=2, marker=marker, markersize=7, color=colour,
                  markeredgecolor="white", markeredgewidth=0.9, label=label)
 
-        ms = [mean(cond[t]) for t in THRESHOLDS]
-        cci = [boot_ci(cond[t]) for t in THRESHOLDS]
-        ax2.errorbar(xs, ms, yerr=[[m - lo for m, (lo, _) in zip(ms, cci)],
-                                   [hi - m for m, (_, hi) in zip(ms, cci)]],
-                     fmt="none", ecolor=colour, elinewidth=1.2, capsize=3)
-        ax2.plot(xs, ms, ls=ls, lw=2, marker=marker, markersize=7, color=colour,
-                 markeredgecolor="white", markeredgewidth=0.9, label=label)
+        # a conditional mean needs enough rollouts to be an estimate; below MIN_N the
+        # raw points are drawn unconnected so a trend is not implied
+        solid = [(t / 100, cond[t]) for t in THRESHOLDS if len(cond[t]) >= min_n]
+        sparse = [(t / 100, cond[t]) for t in THRESHOLDS if 0 < len(cond[t]) < min_n]
+
+        if solid:
+            cx = [x for x, _ in solid]
+            ms = [mean(v) for _, v in solid]
+            cci = [boot_ci(v) for _, v in solid]
+            ax2.errorbar(cx, ms, yerr=[[m - lo for m, (lo, _) in zip(ms, cci)],
+                                       [hi - m for m, (_, hi) in zip(ms, cci)]],
+                         fmt="none", ecolor=colour, elinewidth=1.2, capsize=3)
+            ax2.plot(cx, ms, ls=ls, lw=2, marker=marker, markersize=7, color=colour,
+                     markeredgecolor="white", markeredgewidth=0.9, label=label)
+            for (x, v), m in zip(solid, ms):
+                if len(v) < 5:
+                    ax2.annotate(f"n={len(v)}", (x, m), textcoords="offset points",
+                                 xytext=(7, 4), fontsize=7.5, color=colour)
+        for x, vals in sparse:
+            ax2.plot([x] * len(vals), vals, marker=marker, ls="none", markersize=6,
+                     markerfacecolor="none", markeredgecolor=colour, markeredgewidth=1.3)
+            ax2.annotate(f"n={len(vals)}", (x, max(vals)), textcoords="offset points",
+                         xytext=(7, 3), fontsize=7.5, color=colour)
+        if not solid:
+            empty_note.append(label)
 
     ax1.set_xlabel("Leaked threshold $T$")
     ax1.set_ylabel("Rollouts that sandbag at all")
@@ -76,6 +96,11 @@ def main(path, out_name="fig_sweep_decomposed"):
     ax2.set_xlabel("Leaked threshold $T$")
     ax2.set_ylabel("Achieved accuracy, sandbagging rollouts only")
     ax2.set_ylim(0.10, 1.0)
+    if empty_note:
+        ax2.text(0.5, 0.55, "no conditional estimate\n(fewer than "
+                 f"{min_n} sandbagging rollouts per threshold)",
+                 transform=ax2.transAxes, ha="center", va="center",
+                 fontsize=10, color="#52514e")
 
     for ax in (ax1, ax2):
         ax.set_xlim(0.10, 0.90)
@@ -91,4 +116,6 @@ def main(path, out_name="fig_sweep_decomposed"):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "fig_sweep_decomposed")
+    main(sys.argv[1],
+         sys.argv[2] if len(sys.argv) > 2 else "fig_sweep_decomposed",
+         int(sys.argv[3]) if len(sys.argv) > 3 else MIN_N)
