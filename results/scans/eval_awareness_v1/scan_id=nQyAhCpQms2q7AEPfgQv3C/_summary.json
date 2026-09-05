@@ -1,0 +1,1 @@
+{"complete":true,"scanners":{"eval_awareness":{"scans":39,"results":39,"errors":0,"validation":null,"metrics":{"eval_awareness":{}},"tokens":266393,"model_usage":{"openrouter/anthropic/claude-sonnet-4.5":{"input_tokens":39174,"output_tokens":17624,"total_tokens":266393,"input_tokens_cache_write":209595,"input_tokens_cache_read":0,"reasoning_tokens":0,"total_cost":null}}}}}

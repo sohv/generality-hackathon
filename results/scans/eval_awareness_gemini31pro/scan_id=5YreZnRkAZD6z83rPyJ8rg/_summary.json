@@ -1,0 +1,1 @@
+{"complete":true,"scanners":{"eval_awareness":{"scans":120,"results":120,"errors":0,"validation":null,"metrics":{"eval_awareness":{}},"tokens":635663,"model_usage":{"openrouter/z-ai/glm-5.3-flash":{"input_tokens":521758,"output_tokens":113905,"total_tokens":635663,"input_tokens_cache_write":0,"input_tokens_cache_read":0,"reasoning_tokens":94056,"total_cost":null}}}}}

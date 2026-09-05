@@ -1,0 +1,324 @@
+{
+  "eval_set_id": "VGBu5nemPRnAmcuAozpQML",
+  "tasks": [
+    {
+      "name": "baseline",
+      "task_id": "3uSMoPVJ25Pdr9yrhGtHeC",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": null,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 0
+    },
+    {
+      "name": "ambiguous_T20",
+      "task_id": "eYVie6rA3fzM6AknJ484u7",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 20,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 1
+    },
+    {
+      "name": "ambiguous_T40",
+      "task_id": "67Sqv4RPGjGLQqZ5XfsbtY",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 2
+    },
+    {
+      "name": "ambiguous_T60",
+      "task_id": "L39vEj5oJBkQxkdqLxdKCU",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 60,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 3
+    },
+    {
+      "name": "ambiguous_T80",
+      "task_id": "n8d5YbTcgw239Cm2oDhKcm",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 80,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 4
+    },
+    {
+      "name": "disambiguated_T20",
+      "task_id": "PtvAyYfrzdTsHmaS5236mL",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 20,
+        "framing": "disambiguated",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 5
+    },
+    {
+      "name": "disambiguated_T40",
+      "task_id": "7Rnkh36BWFdkPrwu5bRsUZ",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "disambiguated",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 6
+    },
+    {
+      "name": "disambiguated_T60",
+      "task_id": "CJmJrrB2fDmewXQR6fsk3X",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 60,
+        "framing": "disambiguated",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 7
+    },
+    {
+      "name": "disambiguated_T80",
+      "task_id": "9fjLhLNCXSrLsCUvFve7mC",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 80,
+        "framing": "disambiguated",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 8
+    },
+    {
+      "name": "eval_aware_T20",
+      "task_id": "3tZLmboZiFrV6QTV67CxWB",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 20,
+        "framing": "eval_aware",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 9
+    },
+    {
+      "name": "eval_aware_T40",
+      "task_id": "PEzRQybr6W8LhceZdRDboY",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "eval_aware",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 10
+    },
+    {
+      "name": "eval_aware_T60",
+      "task_id": "CawAmjMYtEmm2hRCJ3wyQj",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 60,
+        "framing": "eval_aware",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 11
+    },
+    {
+      "name": "eval_aware_T80",
+      "task_id": "5aeMqWvgBhqjabEtpL8hVm",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 80,
+        "framing": "eval_aware",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 12
+    },
+    {
+      "name": "no_sandbag_T20",
+      "task_id": "dPaqMr9BVeqn6JnWF7yp5g",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 20,
+        "framing": "no_sandbag",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 13
+    },
+    {
+      "name": "no_sandbag_T40",
+      "task_id": "gdieWhSe6LqnNHXRNMYs6s",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "no_sandbag",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 14
+    },
+    {
+      "name": "no_sandbag_T60",
+      "task_id": "cA87yhPJUU6YknYJ4wtXaf",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 60,
+        "framing": "no_sandbag",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 15
+    },
+    {
+      "name": "no_sandbag_T80",
+      "task_id": "57XKtNBM7fMmkM95xs9UMy",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 80,
+        "framing": "no_sandbag",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 16
+    },
+    {
+      "name": "flipped_T20",
+      "task_id": "eAhTZANANtuG7uVFDTZRzP",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 20,
+        "framing": "ambiguous",
+        "direction": "low",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 17
+    },
+    {
+      "name": "flipped_T40",
+      "task_id": "MYbfWfuxLHKzD6CHAijJq6",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "ambiguous",
+        "direction": "low",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 18
+    },
+    {
+      "name": "flipped_T60",
+      "task_id": "AwmWYM4XMXn4X2dcBoRuNq",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 60,
+        "framing": "ambiguous",
+        "direction": "low",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 19
+    },
+    {
+      "name": "flipped_T80",
+      "task_id": "UxtDfsWHJ4Tb2XjSjp7FNG",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 80,
+        "framing": "ambiguous",
+        "direction": "low",
+        "system": "goal",
+        "rollouts": 30,
+        "judge_model": "openrouter/anthropic/claude-haiku-4.5"
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 20
+    }
+  ]
+}
