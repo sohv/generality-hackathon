@@ -346,7 +346,7 @@
     },
     {
       "name": "flipped_T80",
-      "task_id": "Si2oVrzrG7BXRfS2n3Wnf9",
+      "task_id": "cbe9ezNdcAEX6Xm5x7EnSB",
       "task_file": "src/experiments/sandbagging/inspect_task.py",
       "task_args": {
         "threshold": 80,
