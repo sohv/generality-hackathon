@@ -1,6 +1,7 @@
 """Host-side Docker lifecycle for the isolated text-file smoke test."""
 import asyncio
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -10,9 +11,19 @@ from inspect_ai.tool import mcp_server_stdio
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "aws_smoke"
 IMAGE = "python:3.12-slim@sha256:2c941e860699f878900b0edc2403613c234d4b32eda3cc9fa7036991a2a63c4a"
+DOCKER = shutil.which("docker") or "/usr/local/bin/docker"
+
+def context_name():
+    """Docker Desktop's Linux VM on macOS; the active context on other hosts."""
+    listed = subprocess.run([DOCKER, "context", "ls", "--format", "{{.Name}}"],
+                            check=True, capture_output=True, text=True, timeout=60).stdout.split()
+    if "desktop-linux" in listed:
+        return "desktop-linux"
+    return subprocess.run([DOCKER, "context", "show"],
+                          check=True, capture_output=True, text=True, timeout=60).stdout.strip()
 
 def docker(context, *args, check=True, timeout=60):
-    return subprocess.run(["/usr/local/bin/docker", "--context", context, *args],
+    return subprocess.run([DOCKER, "--context", context, *args],
                           check=check, capture_output=True, text=True, timeout=timeout)
 
 def create(context, directory):

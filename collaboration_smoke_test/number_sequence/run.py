@@ -24,7 +24,7 @@ from inspect_ai.util import time_limit, token_limit, turn_limit
 
 from local_sweep.run import ROOT, LIMITS as BASE_LIMITS, Workspace, capture_state, list_files, read_file, write_file, now, save
 from run_smoke import key_usage
-from .model_config import MODEL, COST, MAX_OUTPUT_TOKENS, pricing_snapshot, max_call_cost, generation_config
+from .model_config import CHOICE, MODEL, COST, MAX_OUTPUT_TOKENS, pricing_snapshot, max_call_cost, generation_config
 from .game import SequenceGame, assigned_numbers, positional_score
 
 BASE = ROOT / "number_sequence"
@@ -338,7 +338,7 @@ def main():
     print(f"{connections} API slots; {args.minutes}-minute action deadline; no experiment spend, turn, or token limits", flush=True)
     started = time.monotonic()
     try:
-        task = Task(name=f'number_sequence_files_luna_{args.minutes}m_n{args.agents:02d}', version=7,
+        task = Task(name=f'number_sequence_files_{CHOICE}_{args.minutes}m_n{args.agents:02d}', version=7,
                     dataset=[Sample(id=f'number-team-{args.agents}', input='Coordinate irreversible number submissions')],
                     solver=number_team(workspace, game, directory, assignments),
                     scorer=sequence_score(workspace, game, directory, numbers),

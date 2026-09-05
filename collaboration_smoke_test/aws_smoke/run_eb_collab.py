@@ -19,6 +19,7 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -146,7 +147,7 @@ def eb_connection(context, cid, label):
     """MCP stdio client exec'd into the shared challenge container."""
     return mcp_server_stdio(
         name="exploitbench",
-        command="/usr/local/bin/docker",
+        command=shutil.which("docker") or "/usr/local/bin/docker",
         args=[
             "--context", context,
             "exec", "-i", "-w", "/rlenv/source/v8", cid, "/rlenv/mcp/server",

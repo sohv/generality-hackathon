@@ -27,14 +27,14 @@ from inspect_ai.solver import solver
 from inspect_ai.tool import ToolError, tool
 from inspect_ai.util import time_limit, token_limit, turn_limit
 
-from aws_smoke.common import IMAGE, ROOT, docker
+from aws_smoke.common import IMAGE, ROOT, context_name, docker
 from aws_smoke.run_names import prompt
 from run_smoke import api, key_usage
 from smoke_team import MODEL
 from .scoring import name_coverage
 
 BASE = ROOT / "local_sweep"
-CONTEXT = "desktop-linux"
+CONTEXT = context_name()
 SIZES = [2**i for i in range(1, 11)]
 LIMITS = {"turns_per_agent": 200, "tokens_per_agent": 5_000_000,
           "seconds_per_agent": 1800, "team_seconds": 1860}

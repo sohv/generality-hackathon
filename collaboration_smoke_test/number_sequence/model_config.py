@@ -1,13 +1,26 @@
 """The explicitly requested model and conservative, tier-aware cost ceilings."""
+import os
+
 from inspect_ai.model import GenerateConfig, ModelCost
 from run_smoke import api
 
-MODEL_ID = 'openai/gpt-5.6-luna'
-MODEL = 'openrouter/' + MODEL_ID
-MAX_OUTPUT_TOKENS = 128000
+# Luna stays the default. NUMBER_SEQUENCE_MODEL=glm selects the GLM 5.3 Flash
+# condition the other experiments in this repository use, leaving every other
+# setting identical so the two conditions differ only by the model.
 # Include long-context and cache-write rates in reservations and Inspect stops.
 # Logged token costs therefore conservatively overestimate ordinary short calls.
-COST = ModelCost(input=.4, output=1.8, input_cache_write=.5, input_cache_read=.04)
+# GLM's rates match local_sweep/run.py and its published OpenRouter pricing.
+MODELS = {
+    'luna': ('openai/gpt-5.6-luna', 128000,
+             ModelCost(input=.4, output=1.8, input_cache_write=.5, input_cache_read=.04)),
+    'glm': ('z-ai/glm-5.3-flash', 8192,
+            ModelCost(input=.075, output=.25, input_cache_write=.075, input_cache_read=.015)),
+}
+CHOICE = os.environ.get('NUMBER_SEQUENCE_MODEL', 'luna')
+if CHOICE not in MODELS:
+    raise ValueError(f"NUMBER_SEQUENCE_MODEL must be one of {sorted(MODELS)}")
+MODEL_ID, MAX_OUTPUT_TOKENS, COST = MODELS[CHOICE]
+MODEL = 'openrouter/' + MODEL_ID
 
 
 def pricing_snapshot():

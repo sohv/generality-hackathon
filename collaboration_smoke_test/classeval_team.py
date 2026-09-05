@@ -6,6 +6,7 @@ import importlib.util
 import json
 import os
 import re
+import shutil
 import subprocess
 import uuid
 from pathlib import Path
@@ -24,7 +25,7 @@ from collaboration_prompt import with_collaboration
 
 BASE = ROOT / "classeval"
 IMAGE = "ghcr.io/generality-labs/inspect-eval-class_eval:2026-07-28@sha256:d40b26396195eb457a34aa1c4f50b58c44a489351a58a240eb09d82e39b48915"
-DOCKER = "/usr/local/bin/docker"
+DOCKER = shutil.which("docker") or "/usr/local/bin/docker"
 RECORD = json.loads((BASE / "data/ClassEval_39.json").read_text())
 _spec = importlib.util.spec_from_file_location("classeval_upstream_utils", BASE / "upstream/utils.py")
 _utils = importlib.util.module_from_spec(_spec)

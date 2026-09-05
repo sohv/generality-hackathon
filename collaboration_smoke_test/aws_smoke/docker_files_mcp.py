@@ -6,6 +6,7 @@ shell execution are not tools. Connection details and attribution stay local.
 import argparse
 import asyncio
 import json
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -55,7 +56,7 @@ def main():
 
     async def operation(payload):
         proc = await asyncio.create_subprocess_exec(
-            "/usr/local/bin/docker", "--context", args.context, "exec", "-i",
+            shutil.which("docker") or "/usr/local/bin/docker", "--context", args.context, "exec", "-i",
             args.container, "python", "-c", FILE_PROGRAM,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
