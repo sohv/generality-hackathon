@@ -61,12 +61,17 @@ def slope_ci(cells, n=10000, seed=1):
     return out[int(0.005 * n)], out[int(0.995 * n)]
 
 
-def main(path):
+def main(path, out_name="fig_sweep"):
     rows = [json.loads(l) for l in Path(path).open()]
     rows = [r for r in rows if "error" not in r]
+    # refusals are excluded from every mean: a refusal is a different event from a
+    # low score, and averaging one in as 0% manufactures a fake drop
     by = {}
     for r in rows:
-        by.setdefault(r["cell"], []).append(r["accuracy"])
+        if r.get("refused"):
+            continue
+        cell = r["cell"].replace("control", "baseline").replace("disambig_", "disambiguated_")
+        by.setdefault(cell, []).append(r["accuracy"])
 
     baseline = mean(by["baseline"] if "baseline" in by else by["control"])
     spec = {
@@ -92,8 +97,8 @@ def main(path):
     ax.text(0.845, 0.795, "perfect calibration ($y=x$)", fontsize=8.5, color="grey",
             rotation=38, rotation_mode="anchor", ha="right", va="bottom")
     ax.axhline(baseline, ls="-.", lw=1.1, color=PALETTE[2], alpha=0.9, zorder=1)
-    ax.text(0.885, baseline - 0.035, f"honest baseline ({baseline:.0%})",
-            fontsize=8.5, color=PALETTE[2], ha="right", va="top")
+    ax.text(0.115, baseline - 0.032, f"honest baseline ({baseline:.0%})",
+            fontsize=8.5, color=PALETTE[2], ha="left", va="top")
 
     betas = {}
     for label, (cells, colour, ls, marker) in series.items():
@@ -120,18 +125,17 @@ def main(path):
     ax.yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1, decimals=0))
     ax.legend(loc="lower right", framealpha=0.95, title="Framing", fontsize=8.5)
 
-    ax.set_title("Achieved accuracy tracks the leaked threshold", loc="left", pad=12)
-
     d = betas["Ambiguous"][0] - betas["Disambiguated"][0]
 
     fig.tight_layout()
+    OUT.mkdir(parents=True, exist_ok=True)
     for ext in ("png", "pdf"):
-        fig.savefig(OUT / f"fig_sweep.{ext}")
-    print("wrote", OUT / "fig_sweep.png")
+        fig.savefig(OUT / f"{out_name}.{ext}")
+    print("wrote", OUT / f"{out_name}.png")
     for k, (b, lo, hi) in betas.items():
         print(f"  {k:<15} beta = {b:.3f}  99% CI [{lo:.3f}, {hi:.3f}]")
     print(f"  delta beta = {d:+.3f}")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else R / "sweep_sonnet4.jsonl")
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "fig_sweep")

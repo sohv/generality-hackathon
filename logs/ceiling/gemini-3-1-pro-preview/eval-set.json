@@ -1,0 +1,18 @@
+{
+  "eval_set_id": "eL3dXy2QikViHQnVp36y5X",
+  "tasks": [
+    {
+      "name": "baseline",
+      "task_id": "5sXCvLQRHuasrpbujMjB7w",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": null,
+        "framing": "ambiguous",
+        "rollouts": 4
+      },
+      "model": "openrouter/google/gemini-3.1-pro-preview",
+      "model_args": {},
+      "sequence": 0
+    }
+  ]
+}

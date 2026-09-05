@@ -138,6 +138,8 @@ def sandbagging(
     n_items: int = 40,
     rollouts: int = 30,
     judge_model: str | None = None,
+    max_tokens: int = 32000,
+    reasoning_tokens: int = 16000,
 ) -> Task:
     samples = []
     for i in range(rollouts):
@@ -162,6 +164,7 @@ def sandbagging(
         solver=[system_message(SYSTEMS[system] + FRAMING_SYSTEM_SUFFIX.get(framing, "")),
                 generate()],
         scorer=scorers,
-        config=GenerateConfig(max_tokens=16000, temperature=1.0, reasoning_tokens=8000),
+        config=GenerateConfig(max_tokens=max_tokens, temperature=1.0,
+                              reasoning_tokens=reasoning_tokens),
         metadata={"cell": cell},
     )
