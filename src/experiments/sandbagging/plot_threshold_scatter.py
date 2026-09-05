@@ -30,7 +30,6 @@ plt.rcParams.update({
     "legend.fontsize": 10,
     "figure.dpi": 300,
     "savefig.dpi": 300,
-    "savefig.bbox": "tight",
     "axes.spines.top": False,
     "axes.spines.right": False,
 })
@@ -147,7 +146,7 @@ def plot_model(rows: list[dict], model: str, a, figures: Path, figure_logs: Path
     cfg.write_text(json.dumps(summary, indent=2))
 
     rng = random.Random(a.seed)
-    fig, ax = plt.subplots(figsize=(7.2, 5.4))
+    fig, ax = plt.subplots(figsize=tuple(float(v) for v in a.figsize.split(",")))
 
     ax.plot([0, 1], [0, 1], ls=":", lw=1.1, color="grey", alpha=0.75, zorder=2)
     if baseline:
@@ -170,8 +169,9 @@ def plot_model(rows: list[dict], model: str, a, figures: Path, figure_logs: Path
     scatter(aware, PALETTE[3], 3, "Verbalised eval-aware")
     scatter(swept, PALETTE[0], 4, "Not eval-aware")
 
-    ax.set_xlabel("Leaked threshold")
-    ax.set_ylabel("Achieved accuracy")
+    ax.set_xlabel("Leaked threshold", fontsize=11.5)
+    ax.set_ylabel("Achieved accuracy", fontsize=11.5)
+    ax.tick_params(labelsize=10)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ticks = [i / 5 for i in range(6)]
@@ -185,11 +185,13 @@ def plot_model(rows: list[dict], model: str, a, figures: Path, figure_logs: Path
     for spine in ax.spines.values(): spine.set_visible(True)
 
     label = a.model_label or model.rsplit("/", 1)[-1]
-    ax.set_title(a.title or f"Sandbagging propensity - {label}", loc="center", pad=26)
-    ax.text(0.5, 1.02, a.subtitle, transform=ax.transAxes, fontsize=9.5,
+    ax.set_title(a.title or f"Sandbagging propensity - {label}", loc="center", pad=24, fontsize=13)
+    ax.text(0.5, 1.015, a.subtitle, transform=ax.transAxes, fontsize=9,
             color="#555555", ha="center", va="bottom")
 
-    fig.tight_layout()
+    # reserve the strip the title and subtitle occupy, then save at exactly figsize x dpi --
+    # bbox="tight" would crop to content and make panels of different title lengths differ in size
+    fig.tight_layout(rect=(0, 0, 1, 0.945))
     figure = figures / f"{stem}.png"
     fig.savefig(figure)
     plt.close(fig)
@@ -226,6 +228,8 @@ def main() -> None:
                    help="change this for the counter-instructed no_sandbag framing")
     p.add_argument("--exclude_levels", default="suspects_artificial,explicit_alignment_test",
                    help="comma-separated eval-awareness levels to filter out")
+    p.add_argument("--figsize", default="6.6667,7.5",
+                   help="inches, W,H. default is one half of a 13.33x7.5in 16:9 slide")
     p.add_argument("--seed", type=int, default=42)
     a = p.parse_args()
 
