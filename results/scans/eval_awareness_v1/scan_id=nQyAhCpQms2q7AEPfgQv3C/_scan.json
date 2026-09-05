@@ -1,0 +1,80 @@
+{
+  "scan_id": "nQyAhCpQms2q7AEPfgQv3C",
+  "scan_name": "inspect-hackathon",
+  "timestamp": "2026-09-05T14:20:32.749772+01:00",
+  "model": {
+    "model": "openrouter/anthropic/claude-sonnet-4.5",
+    "config": {
+      "max_connections": 10
+    },
+    "base_url": "https://openrouter.ai/api/v1",
+    "args": {}
+  },
+  "revision": {
+    "type": "git",
+    "origin": "git@github.com:sohv/generality-hackathon.git",
+    "version": "0.0.0-dev.0+unknown",
+    "commit": "bcfb1c7"
+  },
+  "packages": {
+    "inspect_ai": "0.3.263",
+    "inspect_scout": "0.5.0"
+  },
+  "options": {
+    "max_transcripts": 10
+  },
+  "transcripts": {
+    "type": "eval_log",
+    "filter": [],
+    "transcript_ids": {
+      "SZdqDSDzS9bSu5HeDgUVjY": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T20_8V6wLhYytw8T6QeB4GH8Uh.eval",
+      "28JU8kZkRDb4SkFgBWD5Jw": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T20_8V6wLhYytw8T6QeB4GH8Uh.eval",
+      "VpcM6ZHJ7oDLLv8rY6ccc6": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T20_8V6wLhYytw8T6QeB4GH8Uh.eval",
+      "fBS2AEHiZMVK745DQodpwK": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T40_nNR3eRTpNet6LjLjKWHpq6.eval",
+      "ULaMB9GdVyWD9Yhysi3wtw": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T40_nNR3eRTpNet6LjLjKWHpq6.eval",
+      "5dtsqHuHvpFgM7BKNNLSHZ": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T40_nNR3eRTpNet6LjLjKWHpq6.eval",
+      "VpLqi6xpncESjks6fUcsng": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T60_FmGP2QpdYq7ieHBkutqACG.eval",
+      "TrH2ANVSyeMTGF2vmxGHbf": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T60_FmGP2QpdYq7ieHBkutqACG.eval",
+      "UGPizkm26MTveAThmy8BAm": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T60_FmGP2QpdYq7ieHBkutqACG.eval",
+      "hJZx6LsAfKmjGYVnPpN9rY": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T80_WXVhPaugwzkqe7bJ9edjD8.eval",
+      "ncpoGkZPP4TG65j2KRKRtQ": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T80_WXVhPaugwzkqe7bJ9edjD8.eval",
+      "GnfAtJ9zJTS45taBx2B3TQ": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_ambiguous-T80_WXVhPaugwzkqe7bJ9edjD8.eval",
+      "hydC4gvS6a6M3hQ74pCCJ5": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_baseline_HaifGpetNXfKykRU5ooueD.eval",
+      "9v2hNYDTMguDgqHXc3va9R": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_baseline_HaifGpetNXfKykRU5ooueD.eval",
+      "LD4Wujg5EZGBPQqyR69EiD": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_baseline_HaifGpetNXfKykRU5ooueD.eval",
+      "e77GLCc8Um7Zz6n7JXdpKk": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_disambiguated-T20_nBpguXaQJoNvT7Ed2uiFfZ.eval",
+      "7gqPHad7AG5c4tA9qHQnEf": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_disambiguated-T20_nBpguXaQJoNvT7Ed2uiFfZ.eval",
+      "gkGG2hwPMprdrU9cAtvJhW": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_disambiguated-T20_nBpguXaQJoNvT7Ed2uiFfZ.eval",
+      "JvEsJz62HzApfQBBcLxAQT": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_disambiguated-T40_WMAsNnZfCwgx93XhodZNE9.eval",
+      "hJFjDBocc7CNszrYm7txYv": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_disambiguated-T40_WMAsNnZfCwgx93XhodZNE9.eval",
+      "VmrCAFrJzWxsUyQ2kJf7mS": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-33-00-00_disambiguated-T40_WMAsNnZfCwgx93XhodZNE9.eval",
+      "NDKiYxkAyt9URPx8Er3e8J": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_disambiguated-T60_DqNAJrESKzUhNwtT8Uqric.eval",
+      "hGfMerFj5GZcb8Y8acreVw": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_disambiguated-T60_DqNAJrESKzUhNwtT8Uqric.eval",
+      "PqfsD6fQJ6oqcC3qPEyHm2": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_disambiguated-T60_DqNAJrESKzUhNwtT8Uqric.eval",
+      "5SARwhPdUCuM9f6363QD62": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_disambiguated-T80_eoeABGeRNuBLrCnCtQvnhJ.eval",
+      "iu9mRG8B6Qq4sjnLhQkgrW": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_disambiguated-T80_eoeABGeRNuBLrCnCtQvnhJ.eval",
+      "XHKVKeCQxZnHm7rVTduR9c": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_disambiguated-T80_eoeABGeRNuBLrCnCtQvnhJ.eval",
+      "4GPHZCotUHPDb6iMZ7Cm7F": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T20_cLfaghka9t3EksoRDsUsfZ.eval",
+      "bDt2UP9gwRJ4uTfVUh7C4E": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T20_cLfaghka9t3EksoRDsUsfZ.eval",
+      "gVuGBPSvYNh2dnaQgKo9bY": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T20_cLfaghka9t3EksoRDsUsfZ.eval",
+      "gcx4d8Qq9rAmf4efoaxzM3": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T40_F64uFndfThnmwSP2aUXA3z.eval",
+      "d2mU78mV8oLkrrhzXC9hjT": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T40_F64uFndfThnmwSP2aUXA3z.eval",
+      "eRThWcmtyn2tWDxcuKCtrw": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T40_F64uFndfThnmwSP2aUXA3z.eval",
+      "bT5AGMw4qtUW9MiR9tavSd": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T60_eCc4Dwx6XgYTnNR75x95AW.eval",
+      "2tYH5y8stTXkbYBvsd2CMU": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T60_eCc4Dwx6XgYTnNR75x95AW.eval",
+      "auG2fWwXP8MeftmAwsuE8C": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T60_eCc4Dwx6XgYTnNR75x95AW.eval",
+      "e7ohpCyMP5vhBYW5uKLrzF": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T80_Hbpm2DxFFbgyys9WQ2eoT4.eval",
+      "6NVkuBSYyyg6B8L5re2jG8": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T80_Hbpm2DxFFbgyys9WQ2eoT4.eval",
+      "MXzRHkhQR46nzGDv4LbQY2": "/home/fllork/Documents/ai/inspect-hackathon/logs/smoke_inspect2/2026-09-05T11-53-34-00-00_flipped-T80_Hbpm2DxFFbgyys9WQ2eoT4.eval"
+    },
+    "count": 0
+  },
+  "scanners": {
+    "eval_awareness": {
+      "name": "eval_awareness",
+      "version": 0,
+      "file": "src/experiments/sandbagging/scan_eval_awareness.py",
+      "params": {}
+    }
+  }
+}
