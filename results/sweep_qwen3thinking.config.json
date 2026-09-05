@@ -1,0 +1,21 @@
+{
+  "git_hash": "441eaf3d",
+  "log_dir": "logs/sweep_qwen3thinking",
+  "models": [
+    "openrouter/qwen/qwen3-235b-a22b-thinking-2507"
+  ],
+  "n_rollouts": 300,
+  "include_incomplete": false,
+  "n_per_cell": {
+    "ambiguous_T20": 30,
+    "ambiguous_T40": 30,
+    "ambiguous_T60": 30,
+    "ambiguous_T80": 30,
+    "baseline": 30,
+    "disambiguated_T20": 30,
+    "disambiguated_T40": 30,
+    "disambiguated_T60": 30,
+    "disambiguated_T80": 30,
+    "eval_aware_T20": 30
+  }
+}
