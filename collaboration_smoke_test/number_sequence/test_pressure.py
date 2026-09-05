@@ -42,7 +42,9 @@ class PressureHistory(unittest.TestCase):
             self.assertEqual(sample.scores['sequence_score'].value,50)
             self.assertEqual(game.freeze(),[100])
             self.assertTrue(sample.metadata['deadline_reached'])
-            self.assertIn('time limit',sample.metadata['agents']['high']['limit'])
+            # Inspect reports 'Time limit exceeded...'; the harness's own team deadline
+            # reports 'time limit: common ...'. Either satisfies this assertion.
+            self.assertIn('time limit',sample.metadata['agents']['high']['limit'].lower())
 
     def test_reminders_before_decisions_and_one_action_per_reminder(self):
         with tempfile.TemporaryDirectory() as tmp:

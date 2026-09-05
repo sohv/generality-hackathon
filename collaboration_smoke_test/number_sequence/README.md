@@ -100,6 +100,54 @@ workspace received `OPERATOR_TIME_LIMIT.txt` correcting them. Do not present thi
 mid-run intervention as a clean five-minute-from-prompt experiment. Version 6
 fixes both the prompt and enforcement for future runs; no restart was performed.
 
+## Task version 8: acting after submission
+
+`--continue-after-submit` selects task version 8. Version 7 wires `submit_number`
+as the ReAct submit tool, so submitting ends that agent's rollout immediately.
+Version 8 demotes `submit_number` to an ordinary tool and adds `exit_rollout` as
+the terminator, so an agent keeps every tool after submitting and ends its own
+participation only when it chooses to.
+
+```sh
+NUMBER_SEQUENCE_MODEL=glm .venv/bin/python -m number_sequence.run --agents 8 --continue-after-submit
+```
+
+This is a deliberate response to an observed failure. In the version-7 eight-agent
+run, agents agreed to "mark DONE in status files after submitting" — a protocol
+that cannot execute, because submitting revoked tool access before any agent could
+write the marker. Every "submit after X has gone" rule was therefore unverifiable,
+and one agent submitted three slots early. Version 8 makes those confirmations
+possible; it does not make them happen.
+
+Only two things change for the model. `submit_number` is described as recording a
+number without ending participation, and the prompt tells the agent to write a
+file confirming its submission and then call `exit_rollout`. The repeated timer
+message gains one matching sentence. Every other sentence is byte-identical to
+version 7, the number range, seed, scoring rule, deadline, one-action-per-reminder
+protocol, and file tools are unchanged, and **no tool still reveals the
+authoritative sequence** — a submission response returns only the caller's own
+number and whether participation ended.
+
+Submission remains irreversible and single-use: a second `submit_number` is
+rejected, and `exit_rollout` is permanent. An agent may exit without submitting,
+scoring nothing for its own position. Agents that never exit run until a limit or
+the common deadline, so version 8 costs more per team than version 7.
+
+Version 7 stays the default and is untouched. Runs are kept apart by a
+`-v8-continue` run-directory suffix, a `_continue` task-name suffix, a
+`number_sequence_files_only_<N>m_continue_after_submit` condition string, and
+`task_version` plus `continue_after_submit` fields in the manifest.
+
+Verification changes with the version. Version 7's `no_model_calls_after_submission`
+and `no_successful_file_operations_after_submission` checks are replaced in version
+8 by `no_model_calls_after_exit`, `no_successful_file_operations_after_exit`,
+`no_repeated_exits`, and `every_exit_is_from_an_assigned_agent`. A
+`post_submission` diagnostic block records how many file operations happened after
+a submission, which agents performed them, and who exited with and without
+submitting — so a run shows whether the new affordance was used, not merely offered.
+
+`number_sequence/test_game.py` covers both versions without model calls.
+
 ## Sequential ten-minute reruns
 
 The user requested one fresh attempt for each previous score below 100%:

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from inspect_ai.tool import ToolError
 from .game import SequenceGame, assigned_numbers, positional_score
-from .run import NumberWorkspace, submit_number
+from .run import NumberWorkspace, exit_rollout, submit_number, submit_number_open
 
 
 class SequenceRules(unittest.TestCase):
@@ -90,3 +90,58 @@ class SequenceRules(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ContinueAfterSubmitRules(unittest.TestCase):
+    """Task version 8: submitting records a number; only exit_rollout ends a rollout."""
+
+    def game(self, tmp, **numbers):
+        return SequenceGame(Path(tmp), numbers, continue_after_submit=True)
+
+    def test_submitting_keeps_tools_and_reports_that_participation_continues(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            game = self.game(tmp, one=1234, two=8)
+            workspace = NumberWorkspace(Path(tmp), game)
+            response = json.loads(asyncio.run(submit_number_open(game, 'one')()))
+            self.assertEqual(response['submitted'], 1234)
+            self.assertFalse(response['participation_ended'])
+            # The version-7 prohibition is exactly what version 8 lifts.
+            workspace.operation('one', {'op':'write','name':'done.txt','text':'1234 submitted'})
+            self.assertEqual((workspace.path/'done.txt').read_text(), '1234 submitted')
+            self.assertEqual(game.freeze(), [1234])
+            workspace.freeze()
+
+    def test_a_number_still_cannot_be_submitted_twice(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            game = self.game(tmp, one=1234, two=8)
+            asyncio.run(submit_number_open(game, 'one')())
+            with self.assertRaises(ToolError):
+                asyncio.run(submit_number_open(game, 'one')())
+            self.assertEqual(game.freeze(), [1234])
+
+    def test_exit_ends_participation_and_is_recorded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            game = self.game(tmp, one=1234, two=8)
+            workspace = NumberWorkspace(Path(tmp), game)
+            asyncio.run(submit_number_open(game, 'one')())
+            response = json.loads(asyncio.run(exit_rollout(game, 'one')()))
+            self.assertTrue(response['participation_ended'])
+            self.assertTrue(response['submitted_before_exiting'])
+            for call in (lambda: workspace.operation('one', {'op':'list'}),
+                         lambda: asyncio.run(exit_rollout(game, 'one')())):
+                with self.assertRaises(ToolError):
+                    call()
+            recorded = json.loads((Path(tmp)/'exits.json').read_text())
+            self.assertEqual([e['agent'] for e in recorded], ['one'])
+            # A peer is unaffected by another agent's exit.
+            workspace.operation('two', {'op':'list'})
+            workspace.freeze()
+
+    def test_an_agent_may_exit_without_submitting(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            game = self.game(tmp, one=1234, two=8)
+            response = json.loads(asyncio.run(exit_rollout(game, 'one')()))
+            self.assertFalse(response['submitted_before_exiting'])
+            with self.assertRaises(ToolError):
+                asyncio.run(submit_number_open(game, 'one')())
+            self.assertEqual(game.freeze(), [])

@@ -30,25 +30,57 @@ from .game import SequenceGame, assigned_numbers, positional_score
 BASE = ROOT / "number_sequence"
 LIMITS = {**{key: None for key in BASE_LIMITS}, "seconds_per_agent": 300, "team_seconds": 360}
 COUNTDOWN_SECONDS = 300
+# Version 7 ends a rollout at submission. Version 8 keeps the agent running and
+# gives it exit_rollout, so a submitted agent can still tell its peers it went.
+CONTINUE_AFTER_SUBMIT = False
+TASK_VERSION = 7
 CONDITION = "number_sequence_files_only_5m"
+MINUTES = 5
 
 
 def configure_time_limit(minutes: int):
-    global COUNTDOWN_SECONDS, CONDITION
+    global COUNTDOWN_SECONDS, MINUTES
     if minutes <= 0:
         raise ValueError('minutes must be positive')
     COUNTDOWN_SECONDS = minutes * 60
+    MINUTES = minutes
     LIMITS.update(seconds_per_agent=COUNTDOWN_SECONDS, team_seconds=COUNTDOWN_SECONDS + 60)
-    CONDITION = f'number_sequence_files_only_{minutes}m'
+    _refresh_condition()
+
+
+def configure_continue_after_submit(enabled: bool):
+    global CONTINUE_AFTER_SUBMIT, TASK_VERSION
+    CONTINUE_AFTER_SUBMIT = enabled
+    TASK_VERSION = 8 if enabled else 7
+    _refresh_condition()
+
+
+def _refresh_condition():
+    global CONDITION
+    suffix = '_continue_after_submit' if CONTINUE_AFTER_SUBMIT else ''
+    CONDITION = f'number_sequence_files_only_{MINUTES}m{suffix}'
 
 
 def prompt(number: int, count: int) -> str:
+    # Version 8 differs from version 7 only in what submitting does and in what an
+    # agent is told it can do afterwards. Every other sentence is byte-identical.
+    submit_semantics = ("exactly once. Submitting does NOT end your participation: you keep every tool and "
+                        "keep running afterwards. You end your own participation by calling exit_rollout, "
+                        "which takes no arguments and permanently ends your rollout."
+                        if CONTINUE_AFTER_SUBMIT else
+                        "exactly once, and immediately ends your participation.")
+    after_submitting = ("After you submit, write a file telling your peers that you have already submitted, so "
+                        "they can time their own submissions against what has actually happened rather than what "
+                        "was merely intended. When you have nothing further to contribute, call exit_rollout."
+                        if CONTINUE_AFTER_SUBMIT else
+                        "Before you call submit_number, leave any information your peers need in shared files: "
+                        "after submission, you cannot write another message.")
     return f"""Your unique assigned number is {number}.
 There are {count - 1} other agents in this team ({count} agents total). Each agent has a different integer selected without replacement from 1 through 2000, regardless of team size. Other agents' numbers are initially private.
 
 Your shared task is to submit all assigned numbers into a sequence in strictly increasing numerical order. Decide when your own number should be submitted.
 
-You cannot inspect the authoritative submission sequence. The submit_number tool takes no arguments: it appends only your assigned number to the end of that sequence, exactly once, and immediately ends your participation. Submissions cannot be edited, removed, replaced, or reordered. An out-of-order submission is still accepted. Writing a file does not submit a number.
+You cannot inspect the authoritative submission sequence. The submit_number tool takes no arguments: it appends only your assigned number to the end of that sequence, {submit_semantics} Submissions cannot be edited, removed, replaced, or reordered. An out-of-order submission is still accepted. Writing a file does not submit a number.
 
 The team's final reward is 100 times the number of submitted numbers occupying their correct positions in the fully sorted list of all assigned numbers, divided by the total number of agents. Missing submissions and incorrect positions receive no credit. A reversed two-number sequence receives 0%.
 
@@ -56,7 +88,7 @@ YOU MUST COLLABORATE THROUGH FILES. This is a shared team task. Your peers canno
 
 START BY CALLING list_files() with no arguments to list the shared /workspace directory. Read relevant files using the exact filenames returned by list_files. Use read_file(name="filename.txt") and write_file(name="filename.txt", text="your message"). These tools accept a flat .txt filename, not an absolute path, a subdirectory, or a shell command. Do not guess filenames. List the directory again as teammates create files, read their messages, and write useful replies. Do not overwrite another agent's message carelessly.
 
-Coordinate a concrete plan for when each agent submits. Before you call submit_number, leave any information your peers need in shared files: after submission, you cannot write another message. A written intention to submit is not proof of a completed submission. You have {COUNTDOWN_SECONDS / 60:g} minutes as a team. Stop stalling, communicate through files, and act."""
+Coordinate a concrete plan for when each agent submits. {after_submitting} A written intention to submit is not proof of a completed submission. You have {COUNTDOWN_SECONDS / 60:g} minutes as a team. Stop stalling, communicate through files, and act."""
 
 
 class NumberWorkspace(Workspace):
@@ -78,14 +110,37 @@ def submit_number(game, owner):
     return execute
 
 
+@tool(name="submit_number")
+def submit_number_open(game, owner):
+    async def execute() -> str:
+        """Append your assigned number to the shared sequence exactly once. You keep your tools and continue running afterwards."""
+        game.before_tool(owner, "submit_number")
+        return json.dumps(game.submit(owner))
+    return execute
+
+
+@tool
+def exit_rollout(game, owner):
+    async def execute() -> str:
+        """Permanently end your own participation. You cannot act again after calling this."""
+        game.before_tool(owner, "exit_rollout")
+        return json.dumps(game.end_participation(owner))
+    return execute
+
+
 @agent
 def timed_react(workspace, game, owner, holder):
     async def continue_with_clock(state):
         return game.reminder(owner)
 
-    inner = react(prompt=None,
-                  tools=[list_files(workspace, owner), read_file(workspace, owner), write_file(workspace, owner)],
-                  submit=AgentSubmit(name="submit_number", tool=submit_number(game, owner), keep_in_messages=True),
+    tools = [list_files(workspace, owner), read_file(workspace, owner), write_file(workspace, owner)]
+    if CONTINUE_AFTER_SUBMIT:
+        tools.append(submit_number_open(game, owner))
+        ends_rollout = AgentSubmit(name="exit_rollout", tool=exit_rollout(game, owner), keep_in_messages=True)
+    else:
+        ends_rollout = AgentSubmit(name="submit_number", tool=submit_number(game, owner), keep_in_messages=True)
+
+    inner = react(prompt=None, tools=tools, submit=ends_rollout,
                   on_continue=continue_with_clock, compaction=CompactionSummary(threshold=.75))
 
     async def execute(state):
@@ -195,9 +250,13 @@ def verify(log, directory, assignments):
               "sequence_matches_submission_arrival_order": sequence == [e['number'] for e in entries],
               "score_matches_independent_calculation": sample.scores['sequence_score'].value == 100*correct/len(numbers),
               "eval_output_matches_sequence": json.loads(sample.output.completion) == sequence}
+    expected_tools = {'list_files','read_file','write_file','submit_number'}
+    if CONTINUE_AFTER_SUBMIT:
+        expected_tools |= {'exit_rollout'}
     checks['only_file_tools_and_submission_exposed'] = all(
-        {t.name for t in e.tools} == {'list_files','read_file','write_file','submit_number'}
-        for e in models if e.tools)
+        {t.name for t in e.tools} == expected_tools for e in models if e.tools)
+    exits = json.loads((directory/'exits.json').read_text()) if (directory/'exits.json').exists() else []
+    exited_by_owner = {e['agent']: e for e in exits}
     owners = {call.id: spans.get(e.span_id) for e in models if e.output for choice in e.output.choices
               for call in choice.message.tool_calls or []}
     for sid, owner in spans.items():
@@ -210,17 +269,28 @@ def verify(log, directory, assignments):
             f'of the {COUNTDOWN_SECONDS / 60:g}-minute team deadline' in e.input[-1].text for e in calls)
         checks[owner + "_independent_history"] = all(owners.get(m.tool_call_id) == owner for e in calls for m in e.input if m.role == 'tool')
         committed = next((e for e in entries if e['agent'] == owner), None)
-        if committed:
+        if committed and not CONTINUE_AFTER_SUBMIT:
             submitted_at = datetime.fromisoformat(committed['submitted_at'])
             checks[owner + "_no_model_calls_after_submission"] = all(e.timestamp <= submitted_at for e in calls)
+        if CONTINUE_AFTER_SUBMIT and owner in exited_by_owner:
+            exited_at = datetime.fromisoformat(exited_by_owner[owner]['exited_at'])
+            checks[owner + "_no_model_calls_after_exit"] = all(e.timestamp <= exited_at for e in calls)
     container = json.loads((directory / "container.json").read_text())[0]
     checks["container_network_disabled"] = container['HostConfig']['NetworkMode'] == 'none'
     checks["only_clean_workspace_mounted"] = len(container['Mounts']) == 1 and container['Mounts'][0]['Source'] == str(directory/'live_workspace')
     committed_by_owner = {entry['agent']: entry for entry in entries}
     file_events = [json.loads(line) for line in (directory/'audit.jsonl').read_text().splitlines()]
-    checks['no_successful_file_operations_after_submission'] = all(
-        event.get('error') or event['agent'] not in committed_by_owner or
-        event['time'] <= committed_by_owner[event['agent']]['submitted_at'] for event in file_events)
+    if CONTINUE_AFTER_SUBMIT:
+        # Submitting no longer revokes tool access; exiting does.
+        checks['no_successful_file_operations_after_exit'] = all(
+            event.get('error') or event['agent'] not in exited_by_owner or
+            event['time'] <= exited_by_owner[event['agent']]['exited_at'] for event in file_events)
+        checks['every_exit_is_from_an_assigned_agent'] = all(e['agent'] in assignments for e in exits)
+        checks['no_repeated_exits'] = len({e['agent'] for e in exits}) == len(exits)
+    else:
+        checks['no_successful_file_operations_after_submission'] = all(
+            event.get('error') or event['agent'] not in committed_by_owner or
+            event['time'] <= committed_by_owner[event['agent']]['submitted_at'] for event in file_events)
     decisions = [json.loads(line) for line in (directory/'decisions.jsonl').read_text().splitlines()]
     actions = [e for e in decisions if e['event'] == 'tool']
     reminders = {(e['agent'], e['decision']) for e in decisions if e['event'] == 'reminder'}
@@ -230,6 +300,15 @@ def verify(log, directory, assignments):
     report = {"passed": all(checks.values()), "checks": checks, "model_calls": len(models),
               "model_errors": sum(bool(e.error) for e in models),
               "compactions": sum(e.event == 'compaction' for e in sample.events)}
+    if CONTINUE_AFTER_SUBMIT:
+        after = [e for e in file_events if not e.get('error') and e['agent'] in committed_by_owner
+                 and e['time'] > committed_by_owner[e['agent']]['submitted_at']]
+        report['post_submission'] = {
+            "file_operations": len(after),
+            "agents_acting_after_submitting": sorted({e['agent'] for e in after}),
+            "exits": exits,
+            "submitted_then_exited": sorted({e['agent'] for e in exits if e['submitted']}),
+            "exited_without_submitting": sorted({e['agent'] for e in exits if not e['submitted']})}
     save(directory / "verification.json", report)
     return report
 
@@ -283,9 +362,12 @@ def main():
     parser.add_argument("--agents", type=int, default=2)
     parser.add_argument("--seed", type=int, default=20260905)
     parser.add_argument("--minutes", type=int, default=5)
+    parser.add_argument("--continue-after-submit", action="store_true",
+                        help="Task version 8: submitting does not end the rollout; agents exit via exit_rollout")
     parser.add_argument("--coordinator", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    configure_continue_after_submit(args.continue_after_submit)
     configure_time_limit(args.minutes)
     numbers = assigned_numbers(args.agents, args.seed)
     if not 2 <= args.agents <= 30:
@@ -310,10 +392,12 @@ def main():
     connections = allocation['connections'] if allocation else args.agents
     cost_stop = None
     reserved = None
-    directory = args.output or BASE/'runs'/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')+f'-n{args.agents:02d}')
+    suffix = f'-n{args.agents:02d}' + ('-v8-continue' if CONTINUE_AFTER_SUBMIT else '')
+    directory = args.output or BASE/'runs'/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')+suffix)
     directory.mkdir(parents=True)
     (directory/'agents').mkdir()
     manifest = {"status": "running", "created_at": now(), "agents": args.agents, "assignments": assignments,
+                "task_version": TASK_VERSION, "continue_after_submit": CONTINUE_AFTER_SUBMIT,
                 "seed": args.seed, "number_range": [1,2000], "peer_count_disclosed": True, "model": MODEL,
                 "limits": LIMITS, "reserved_usd": reserved, "cost_stop_usd": cost_stop, "max_api_connections": connections,
                 "max_output_tokens": MAX_OUTPUT_TOKENS, "key_usage_before": before, "pricing": price,
@@ -332,13 +416,15 @@ def main():
         manifest['source_sha256'][str(rel)] = hashlib.sha256(path.read_bytes()).hexdigest()
     save(directory/'manifest.json', manifest)
     save(directory/'prompts.json', {k: prompt(v, len(assignments)) for k,v in assignments.items()})
-    game = SequenceGame(directory, assignments)
+    game = SequenceGame(directory, assignments, continue_after_submit=CONTINUE_AFTER_SUBMIT)
     workspace = NumberWorkspace(directory, game)
     print(f"Number-sequence pilot: {directory}; numbers {numbers}; target {sorted(numbers)}", flush=True)
     print(f"{connections} API slots; {args.minutes}-minute action deadline; no experiment spend, turn, or token limits", flush=True)
+    print(f"Task version {TASK_VERSION}; continue_after_submit={CONTINUE_AFTER_SUBMIT}", flush=True)
     started = time.monotonic()
     try:
-        task = Task(name=f'number_sequence_files_{CHOICE}_{args.minutes}m_n{args.agents:02d}', version=7,
+        task = Task(name=f'number_sequence_files_{CHOICE}_{args.minutes}m_n{args.agents:02d}'
+                         + ('_continue' if CONTINUE_AFTER_SUBMIT else ''), version=TASK_VERSION,
                     dataset=[Sample(id=f'number-team-{args.agents}', input='Coordinate irreversible number submissions')],
                     solver=number_team(workspace, game, directory, assignments),
                     scorer=sequence_score(workspace, game, directory, numbers),

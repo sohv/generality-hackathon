@@ -26,7 +26,7 @@ def positional_score(sequence: list[int], numbers: list[int]) -> dict:
 
 
 class SequenceGame:
-    def __init__(self, directory: Path, assignments: dict[str, int]):
+    def __init__(self, directory: Path, assignments: dict[str, int], continue_after_submit: bool = False):
         if len(set(assignments.values())) != len(assignments) or not assignments:
             raise ValueError("Assignments must be nonempty and unique")
         if any(type(n) is not int or not 1 <= n <= 2000 for n in assignments.values()):
@@ -35,6 +35,11 @@ class SequenceGame:
         self.assignments = assignments
         self.entries: list[dict] = []
         self.submitted: set[str] = set()
+        # Task version 8: submitting records a number but does not end the rollout.
+        # Participation then ends only via the exit tool, a limit, or the deadline.
+        self.continue_after_submit = continue_after_submit
+        self.exited: set[str] = set()
+        self.exits: list[dict] = []
         self.active = True
         self.lock = RLock()
         self.started = None
@@ -63,7 +68,10 @@ class SequenceGame:
                    "If time runs out before everyone submits, you will all fail. "
                    "COLLABORATE THROUGH FILES NOW. Use list_files() to discover exact filenames, read peer messages, "
                    "and write coordination messages. Stop stalling and submit your number at the agreed time before the deadline. "
-                   "Call exactly one tool next; additional calls in the same response will be rejected.")
+                   + ("You keep your file tools after submitting: tell your peers that you have submitted, then call "
+                      "exit_rollout when you have nothing left to contribute. "
+                      if self.continue_after_submit else "")
+                   + "Call exactly one tool next; additional calls in the same response will be rejected.")
         self.audit_decision(owner, "reminder", message=message, elapsed_seconds=elapsed)
         return message
 
@@ -85,8 +93,10 @@ class SequenceGame:
     def check_active(self, owner: str):
         if owner not in self.assignments:
             raise ToolError("Unknown participant")
-        if owner in self.submitted:
+        if owner in self.submitted and not self.continue_after_submit:
             raise ToolError("You already submitted; your participation has ended")
+        if owner in self.exited:
+            raise ToolError("You ended your own participation")
         if not self.active:
             raise ToolError("The team attempt has ended")
         if self.enforce_deadline and self.started is not None and self.elapsed() >= self.deadline_seconds:
@@ -95,6 +105,8 @@ class SequenceGame:
     def submit(self, owner: str) -> dict:
         with self.lock:
             self.check_active(owner)
+            if owner in self.submitted:
+                raise ToolError("You already submitted your number; a number can be submitted only once")
             entry = {"position": len(self.entries) + 1, "number": self.assignments[owner],
                      "agent": owner, "submitted_at": now(), "elapsed_seconds": self.elapsed()}
             # Arrival order is preserved. No sorting, turn scheduling, or rejection
@@ -104,7 +116,21 @@ class SequenceGame:
             self.persist()
             with (self.directory / "submission_audit.jsonl").open("a") as audit:
                 audit.write(json.dumps(entry) + "\n")
-            return {"submitted": entry["number"], "participation_ended": True}
+            return {"submitted": entry["number"],
+                    "participation_ended": not self.continue_after_submit}
+
+    def end_participation(self, owner: str) -> dict:
+        """Version 8 only: the agent's own irreversible exit from its rollout."""
+        with self.lock:
+            self.check_active(owner)
+            record = {"agent": owner, "submitted": owner in self.submitted,
+                      "exited_at": now(), "elapsed_seconds": self.elapsed()}
+            self.exited.add(owner)
+            self.exits.append(record)
+            save(self.directory / "exits.json", self.exits)
+            self.audit_decision(owner, "exit", submitted=record["submitted"],
+                                elapsed_seconds=record["elapsed_seconds"])
+            return {"participation_ended": True, "submitted_before_exiting": record["submitted"]}
 
     def persist(self):
         save(self.directory / "sequence.json", [e["number"] for e in self.entries])
