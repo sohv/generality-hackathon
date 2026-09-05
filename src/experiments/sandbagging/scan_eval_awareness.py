@@ -3,9 +3,11 @@ uv run -m src.experiments.sandbagging.scan_eval_awareness --log_dir logs/smoke_i
 """
 
 import argparse
+import asyncio
 import logging
 import os
 import re
+from collections import defaultdict
 from pathlib import Path
 from typing import Literal
 
@@ -147,14 +149,38 @@ def eval_awareness(model: str | None = None) -> Scanner[Transcript]:
     return scan_transcript
 
 
+async def winning_logs(log_dir: str) -> list[str]:
+    """A resumed eval_set leaves several logs per cell; keep whichever holds the most
+    rollouts, matching the rule extract.py uses so scan rows join to behavioural rows."""
+    per_cell: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    dates: dict[str, str] = {}
+    async with transcripts_from(log_dir).reader() as reader:
+        async for i in reader.index():
+            per_cell[i.task_set][i.source_uri] += 1
+            dates[i.source_uri] = str(i.date)
+    winners = []
+    for cell, files in sorted(per_cell.items()):
+        best = max(files, key=lambda u: (files[u], dates[u]))
+        for u in files:
+            if u != best:
+                LOGGER.warning(f"{cell}: dropping {Path(u).name} ({files[u]} rollouts) "
+                               f"for {Path(best).name} ({files[best]} rollouts)")
+        winners.append(best)
+    return winners
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--log_dir", required=True)
+    p.add_argument("--log_dir", default=None)
+    p.add_argument("--log_files", nargs="+", default=None,
+                   help="explicit .eval files to scan, instead of a whole --log_dir")
     p.add_argument("--scans_dir", required=True)
     p.add_argument("--model", default="openrouter/anthropic/claude-sonnet-4.5")
     p.add_argument("--filter", default=None, help="SQL over the transcript index, e.g. task_set LIKE 'ambiguous%%'")
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--max_transcripts", type=int, default=10)
+    p.add_argument("--no_dedupe", action="store_true",
+                   help="scan every log; by default a resumed set keeps one log per cell")
     p.add_argument("--validation", default=None, help="scout validation set (jsonl) of hand labels")
     a = p.parse_args()
 
@@ -168,7 +194,12 @@ def main() -> None:
     if not os.environ.get("OPENROUTER_API_KEY"):
         os.environ["OPENROUTER_API_KEY"] = os.environ["API_KEY"]
 
-    transcripts = transcripts_from(a.log_dir)
+    assert bool(a.log_dir) != bool(a.log_files), "pass exactly one of --log_dir or --log_files"
+    if a.log_files:
+        logs = a.log_files
+    else:
+        logs = a.log_dir if a.no_dedupe else asyncio.run(winning_logs(a.log_dir))
+    transcripts = transcripts_from(logs)
     if a.filter: transcripts = transcripts.where(a.filter)
 
     status = scan(
