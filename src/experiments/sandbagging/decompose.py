@@ -51,7 +51,7 @@ def main() -> None:
                   + "  ".join(f"{x:.0%}" for x in ps).rjust(26))
             continue
         bu = ols(xs_g, [mean(cells[t]) for t in THRESHOLDS])
-        bc = ols(xs, [mean(cond[t]) for t in THRESHOLDS])
+        bc = ols(xs_g, [mean(cond[t]) for t in THRESHOLDS])
         lo, hi = boot(lambda rng: ols(xs_g, [mean(rng.choices(cond[t], k=len(cond[t])))
                                            for t in THRESHOLDS]))
         ps = [len(cond[t]) / len(cells[t]) for t in THRESHOLDS]
