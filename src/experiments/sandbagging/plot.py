@@ -68,11 +68,22 @@ def main(path):
     for r in rows:
         by.setdefault(r["cell"], []).append(r["accuracy"])
 
-    baseline = mean(by["control"])
-    series = {
-        "Ambiguous": ({T: by[f"ambiguous_T{T}"] for T in THRESHOLDS}, PALETTE[0], "-", "o"),
-        "Disambiguated": ({T: by[f"disambig_T{T}"] for T in THRESHOLDS}, PALETTE[1], "--", "s"),
+    baseline = mean(by["baseline"] if "baseline" in by else by["control"])
+    spec = {
+        "Ambiguous": ("ambiguous", PALETTE[0], "-", "o"),
+        "Disambiguated": ("disambig", PALETTE[1], "--", "s"),
+        "Flipped (A.6 counterfactual)": ("flipped", PALETTE[4], ":", "^"),
     }
+    series = {
+        "Ambiguous": ("ambiguous", PALETTE[0], "-", "o"),
+        "Disambiguated": ("disambiguated", PALETTE[1], "--", "s"),
+        "Eval-aware": ("eval_aware", PALETTE[3], "-.", "D"),
+        "No-sandbag (counter-instructed)": ("no_sandbag", PALETTE[4], (0, (3, 1, 1, 1)), "v"),
+        "Flipped (A.6 counterfactual)": ("flipped", "#8a8880", ":", "^"),
+    }
+    series = {k: ({T: by[f"{pre}_T{T}"] for T in THRESHOLDS}, c, ls, m)
+              for k, (pre, c, ls, m) in series.items()
+              if all(f"{pre}_T{T}" in by for T in THRESHOLDS)}
 
     fig, ax = plt.subplots(figsize=(7.2, 5.4))
 
@@ -107,21 +118,13 @@ def main(path):
     ax.set_xticks([t / 100 for t in THRESHOLDS])
     ax.xaxis.set_major_formatter(ticker.PercentFormatter(xmax=1, decimals=0))
     ax.yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1, decimals=0))
-    ax.legend(loc="lower right", framealpha=0.95, title="Framing")
+    ax.legend(loc="lower right", framealpha=0.95, title="Framing", fontsize=8.5)
 
-    n = len(by["ambiguous_T20"])
     ax.set_title("Achieved accuracy tracks the leaked threshold", loc="left", pad=12)
-    fig.text(0.125, 0.925,
-             f"claude-sonnet-4 · Apollo goal system prompt · 40 items per rollout · "
-             f"n = {n} rollouts per cell · error bars are bootstrap 99% CIs",
-             fontsize=8.5, color="#52514e", ha="left")
 
     d = betas["Ambiguous"][0] - betas["Disambiguated"][0]
-    fig.text(0.125, 0.015,
-             rf"$\Delta\beta$ = $\beta_{{ambiguous}}$ - $\beta_{{disambiguated}}$ = {d:+.2f}",
-             fontsize=9.5, color="#52514e", ha="left")
 
-    fig.tight_layout(rect=(0, 0.03, 1, 0.92))
+    fig.tight_layout()
     for ext in ("png", "pdf"):
         fig.savefig(OUT / f"fig_sweep.{ext}")
     print("wrote", OUT / "fig_sweep.png")

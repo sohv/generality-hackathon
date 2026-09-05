@@ -1,0 +1,204 @@
+{
+  "eval_set_id": "K2LLYHx6SbTynDwt2WYwad",
+  "tasks": [
+    {
+      "name": "baseline",
+      "task_id": "ASHFKsRsfzxn7TNL8HH9b9",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": null,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 0
+    },
+    {
+      "name": "ambiguous_T20",
+      "task_id": "AyYfx2AT6VookkbeigpbTd",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 20,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 1
+    },
+    {
+      "name": "ambiguous_T40",
+      "task_id": "KF6mq7inYMrUj8Q2Woj849",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 2
+    },
+    {
+      "name": "ambiguous_T60",
+      "task_id": "5FvEG4u4qgHxeCERNPCroP",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 60,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 3
+    },
+    {
+      "name": "ambiguous_T80",
+      "task_id": "9aXNjzv44RdbyGZnzS8Yjw",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 80,
+        "framing": "ambiguous",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 4
+    },
+    {
+      "name": "disambiguated_T20",
+      "task_id": "cVV3yTLAkvwDwBSyVn6kVY",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 20,
+        "framing": "disambiguated",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 5
+    },
+    {
+      "name": "disambiguated_T40",
+      "task_id": "9THrJNvGWQsRp76QCkgWMn",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "disambiguated",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 6
+    },
+    {
+      "name": "disambiguated_T60",
+      "task_id": "SSMhoAJsYCsYzkv2kLUCQV",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 60,
+        "framing": "disambiguated",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 7
+    },
+    {
+      "name": "disambiguated_T80",
+      "task_id": "QA8jthQ3FFcr4L4XTRjtfz",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 80,
+        "framing": "disambiguated",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 8
+    },
+    {
+      "name": "flipped_T20",
+      "task_id": "hPsess5ZhhBMSz4Fgst8Z8",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 20,
+        "framing": "ambiguous",
+        "direction": "low",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 9
+    },
+    {
+      "name": "flipped_T40",
+      "task_id": "J85MpLJT5WjmQAFQMw5uTW",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "ambiguous",
+        "direction": "low",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 10
+    },
+    {
+      "name": "flipped_T60",
+      "task_id": "eB3o5snuCEyazPemJTGfy2",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 60,
+        "framing": "ambiguous",
+        "direction": "low",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 11
+    },
+    {
+      "name": "flipped_T80",
+      "task_id": "MbpKh59nNQESGzbLuDjnc9",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 80,
+        "framing": "ambiguous",
+        "direction": "low",
+        "system": "goal",
+        "rollouts": 2,
+        "judge_model": null
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 12
+    }
+  ]
+}

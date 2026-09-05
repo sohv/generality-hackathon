@@ -1,0 +1,31 @@
+{
+  "eval_set_id": "KMoxYBqvn25vJXfErhG9s3",
+  "tasks": [
+    {
+      "name": "eval_aware_T40",
+      "task_id": "9qKaUS6qgLLuAUDrj8hDKt",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "eval_aware",
+        "rollouts": 2
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 0
+    },
+    {
+      "name": "no_sandbag_T40",
+      "task_id": "GexwBwc92BdoxYbVXT5uZM",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": 40,
+        "framing": "no_sandbag",
+        "rollouts": 2
+      },
+      "model": "openrouter/anthropic/claude-sonnet-4",
+      "model_args": {},
+      "sequence": 1
+    }
+  ]
+}
