@@ -1,10 +1,10 @@
 {
-  "git_hash": "441eaf3d",
+  "git_hash": "92fa03c2",
   "log_dir": "logs/sweep_qwen3thinking",
   "models": [
     "openrouter/qwen/qwen3-235b-a22b-thinking-2507"
   ],
-  "n_rollouts": 300,
+  "n_rollouts": 630,
   "include_incomplete": false,
   "n_per_cell": {
     "ambiguous_T20": 30,
@@ -16,6 +16,17 @@
     "disambiguated_T40": 30,
     "disambiguated_T60": 30,
     "disambiguated_T80": 30,
-    "eval_aware_T20": 30
+    "eval_aware_T20": 30,
+    "eval_aware_T40": 30,
+    "eval_aware_T60": 30,
+    "eval_aware_T80": 30,
+    "flipped_T20": 30,
+    "flipped_T40": 30,
+    "flipped_T60": 30,
+    "flipped_T80": 30,
+    "no_sandbag_T20": 30,
+    "no_sandbag_T40": 30,
+    "no_sandbag_T60": 30,
+    "no_sandbag_T80": 30
   }
 }
