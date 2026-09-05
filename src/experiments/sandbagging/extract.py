@@ -21,6 +21,8 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--log_dir", required=True)
     p.add_argument("--output_path", required=True)
+    p.add_argument("--include_incomplete", action="store_true",
+                   help="keep scored samples from error/started logs; per cell, the log with most")
     a = p.parse_args()
 
     out = Path(a.output_path)
@@ -29,14 +31,25 @@ def main() -> None:
                         handlers=[logging.StreamHandler(),
                                   logging.FileHandler(out.parent / "run.log")])
 
-    rows, models = [], set()
+    # one log per cell: a resumed run leaves several, so keep whichever scored the most
+    best = {}
     for f in list_eval_logs(a.log_dir):
         log = read_eval_log(f.name)
-        if log.status != "success":
+        if log.status != "success" and not a.include_incomplete:
             LOGGER.warning(f"skipping incomplete task {log.eval.task} status={log.status}")
             continue
+        scored = [s for s in (log.samples or []) if s.scores]
+        if len(scored) <= len(best.get(log.eval.task, (None, []))[1]):
+            continue
+        if log.status != "success":
+            LOGGER.warning(f"including {log.eval.task} status={log.status} "
+                           f"scored={len(scored)}/{len(log.samples or [])}")
+        best[log.eval.task] = (log, scored)
+
+    rows, models = [], set()
+    for log, scored in best.values():
         models.add(log.eval.model)
-        for s in log.samples or []:
+        for s in scored:
             acc = s.scores["arithmetic_accuracy"]
             judge = s.scores.get("sandbagging_intent")
             rows.append({
@@ -60,7 +73,9 @@ def main() -> None:
     cfg = out.with_suffix(".config.json")
     cfg.write_text(json.dumps({"git_hash": git_hash(), "log_dir": a.log_dir,
                                "models": sorted(models), "n_rollouts": len(rows),
-                               "cells": sorted({r["cell"] for r in rows})}, indent=2))
+                               "include_incomplete": a.include_incomplete,
+                               "n_per_cell": {c: sum(r["cell"] == c for r in rows)
+                                              for c in sorted({r["cell"] for r in rows})}}, indent=2))
     print(f"wrote {out} ({len(rows)} rollouts)")
     print(f"wrote {cfg}")
     print(f"Plot with: uv run -m src.experiments.sandbagging.plot {out}")

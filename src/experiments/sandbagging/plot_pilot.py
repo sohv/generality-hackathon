@@ -84,13 +84,6 @@ for s in ("top", "right", "left"):
 ax.spines["bottom"].set_color("#d8d6cf")
 ax.tick_params(length=0)
 
-ax.set_title("Sandbagging appears only with a goal in the system prompt",
-             fontsize=14, color=INK, loc="left", pad=40, fontweight="bold")
-ax.text(0, 1.055,
-        "claude-sonnet-4 · 40 arithmetic items per rollout · 20 rollouts per cell · "
-        "black bars are the mean with a bootstrap 99% CI",
-        transform=ax.transAxes, fontsize=9, color=INK2, ha="left")
-
 fig.tight_layout(rect=(0, 0.01, 1, 0.99))
 fig.savefig(OUT, dpi=220, facecolor=SURFACE)
 print("wrote", OUT)

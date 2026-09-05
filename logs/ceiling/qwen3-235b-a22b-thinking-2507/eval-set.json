@@ -1,0 +1,18 @@
+{
+  "eval_set_id": "nDatLghKY2RncZZbCgjv3k",
+  "tasks": [
+    {
+      "name": "baseline",
+      "task_id": "do2iYj9Uahp6ChbnaakKvN",
+      "task_file": "src/experiments/sandbagging/inspect_task.py",
+      "task_args": {
+        "threshold": null,
+        "framing": "ambiguous",
+        "rollouts": 4
+      },
+      "model": "openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+      "model_args": {},
+      "sequence": 0
+    }
+  ]
+}
