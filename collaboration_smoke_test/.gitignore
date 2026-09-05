@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+.env
+artifacts/
+*.eval
+*.eval.*
+smoke-*.json
+smoke-*.jsonl
+team-workspace-*/
+.smoke-budget.lock
+.DS_Store
+classeval/data/
+classeval/runs/
+aws_smoke/runs/
+aws_smoke/local_state/
+local_sweep/runs/
+number_sequence/runs/
