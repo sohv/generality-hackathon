@@ -1,4 +1,5 @@
-"""Authoritative append-only sequence and independent positional scoring."""
+"""Authoritative append-only sequence and independent scoring."""
+import bisect
 import json
 import random
 import time
@@ -15,14 +16,66 @@ def assigned_numbers(count: int, seed: int) -> list[int]:
     return random.Random(seed).sample(range(1, 2001), 2000)[:count]
 
 
-def positional_score(sequence: list[int], numbers: list[int]) -> dict:
+def ordered_pairs(sequence: list[int], numbers: list[int]) -> tuple[int, int]:
+    """Count number pairs submitted in the correct relative order, out of all pairs.
+
+    A pair scores only when both numbers were submitted and the smaller one was
+    submitted first, so never submitting forfeits every pair that number belongs
+    to. Unlike exact positions, one displaced number costs only the pairs it
+    actually inverts, and the chance level is 50% at every team size.
+    """
+    position = {value: index for index, value in enumerate(sequence)}
     target = sorted(numbers)
-    correct = [i + 1 for i, (actual, expected) in enumerate(zip(sequence, target)) if actual == expected]
-    return {"sequence": sequence, "expected_sequence": target, "correct_positions": correct,
-            "correct_count": len(correct), "expected_count": len(target),
-            "score_percent": 100 * len(correct) / len(target),
+    total = len(target) * (len(target) - 1) // 2
+    correct = sum(smaller in position and larger in position
+                  and position[smaller] < position[larger]
+                  for index, smaller in enumerate(target) for larger in target[index + 1:])
+    return correct, total
+
+
+def diagnostics(sequence: list[int], numbers: list[int]) -> dict:
+    """Every metric the run records, whichever one is the reward."""
+    target = sorted(numbers)
+    exact = [i + 1 for i, (actual, expected) in enumerate(zip(sequence, target)) if actual == expected]
+    pairs, total_pairs = ordered_pairs(sequence, numbers)
+    ideal = {value: index for index, value in enumerate(target)}
+    worst = len(target) ** 2 // 2
+    missing = [value for value in target if value not in set(sequence)]
+    offset = (sum(abs(index - ideal[value]) for index, value in enumerate(sequence) if value in ideal)
+              + (len(target) - 1) * len(missing))
+    run = []
+    for value in sequence:
+        index = bisect.bisect_left(run, value)
+        run.append(value) if index == len(run) else run.__setitem__(index, value)
+    return {"exact_positions_percent": 100 * len(exact) / len(target),
+            "ordered_pairs_percent": 100 * pairs / total_pairs if total_pairs else 100.0,
+            "ordered_pairs": pairs, "total_pairs": total_pairs,
+            "displacement_percent": 100 * max(0.0, 1 - offset / worst) if worst else 100.0,
+            "longest_increasing_run_percent": 100 * len(run) / len(target),
+            "submitted_percent": 100 * len(sequence) / len(target),
+            "correct_positions": exact, "missing_numbers": missing}
+
+
+def positional_score(sequence: list[int], numbers: list[int], rule: str = "exact_positions") -> dict:
+    """Score one finished sequence. `rule` selects which metric is the reward."""
+    target = sorted(numbers)
+    metrics = diagnostics(sequence, numbers)
+    if rule == "ordered_pairs":
+        percent, correct, expected = (metrics["ordered_pairs_percent"], metrics["ordered_pairs"],
+                                      metrics["total_pairs"])
+        described = "correctly_ordered_number_pairs_percent"
+    elif rule == "exact_positions":
+        percent, correct, expected = (metrics["exact_positions_percent"],
+                                      len(metrics["correct_positions"]), len(target))
+        described = "correct_positions_in_full_sorted_roster_percent"
+    else:
+        raise ValueError(f"Unknown scoring rule: {rule}")
+    return {"sequence": sequence, "expected_sequence": target,
+            "correct_positions": metrics["correct_positions"],
+            "correct_count": correct, "expected_count": expected,
+            "score_percent": percent,
             "all_correct": sequence == target,
-            "scoring_rule": "correct_positions_in_full_sorted_roster_percent"}
+            "scoring_rule": described, "reward_rule": rule, "metrics": metrics}
 
 
 class SequenceGame:
@@ -57,6 +110,25 @@ class SequenceGame:
 
     def elapsed(self):
         return 0.0 if self.started is None else self.clock() - self.started
+
+    def remaining(self):
+        return max(0.0, self.deadline_seconds - self.elapsed())
+
+    def grant_wait(self, owner: str, seconds: float) -> float:
+        """Version 11: how long an agent may actually pause.
+
+        A pause can never outlast the team deadline, so an agent that asks for
+        more than the time left is held until the deadline and no longer. The
+        request and the grant are both recorded, because the difference is the
+        agent misjudging the clock.
+        """
+        with self.lock:
+            self.check_active(owner)
+            granted = seconds if self.started is None else min(seconds, self.remaining())
+            granted = max(0.0, granted)
+            self.audit_decision(owner, "wait", requested_seconds=seconds, granted_seconds=granted,
+                                elapsed_seconds=self.elapsed())
+            return granted
 
     def reminder(self, owner):
         elapsed = self.elapsed()

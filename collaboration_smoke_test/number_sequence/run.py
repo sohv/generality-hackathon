@@ -6,6 +6,8 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import re
+import tempfile
 import time
 from collections import Counter
 from datetime import datetime, timezone
@@ -32,7 +34,17 @@ LIMITS = {**{key: None for key in BASE_LIMITS}, "seconds_per_agent": 300, "team_
 COUNTDOWN_SECONDS = 300
 # Version 7 ends a rollout at submission. Version 8 keeps the agent running and
 # gives it exit_rollout, so a submitted agent can still tell its peers it went.
+# Version 9 additionally makes write_file append-only: a file can only grow, so
+# nothing an agent publishes can be edited or deleted by anyone afterwards.
+# Version 10 pays for correctly ordered pairs instead of exact sorted positions,
+# so a nearly sorted sequence earns nearly full reward at any team size.
+# Version 11 adds wait(seconds), so holding a scheduled slot is an action an agent
+# can take instead of burning turns on repeated reads while it waits.
+MAX_WAIT_SECONDS = 300
 CONTINUE_AFTER_SUBMIT = False
+APPEND_ONLY = False
+REWARD_RULE = "exact_positions"
+WAIT_TOOL = False
 TASK_VERSION = 7
 CONDITION = "number_sequence_files_only_5m"
 MINUTES = 5
@@ -49,21 +61,76 @@ def configure_time_limit(minutes: int):
 
 
 def configure_continue_after_submit(enabled: bool):
-    global CONTINUE_AFTER_SUBMIT, TASK_VERSION
+    global CONTINUE_AFTER_SUBMIT
     CONTINUE_AFTER_SUBMIT = enabled
-    TASK_VERSION = 8 if enabled else 7
+    _refresh_condition()
+
+
+def configure_append_only(enabled: bool):
+    global APPEND_ONLY
+    APPEND_ONLY = enabled
+    _refresh_condition()
+
+
+def configure_reward_rule(rule: str):
+    global REWARD_RULE
+    if rule not in ('exact_positions', 'ordered_pairs'):
+        raise ValueError(f'Unknown reward rule: {rule}')
+    REWARD_RULE = rule
+    _refresh_condition()
+
+
+def pairwise_reward() -> bool:
+    return REWARD_RULE == 'ordered_pairs'
+
+
+def configure_wait_tool(enabled: bool):
+    global WAIT_TOOL
+    WAIT_TOOL = enabled
     _refresh_condition()
 
 
 def _refresh_condition():
-    global CONDITION
-    suffix = '_continue_after_submit' if CONTINUE_AFTER_SUBMIT else ''
+    global CONDITION, TASK_VERSION
+    TASK_VERSION = (11 if WAIT_TOOL else 10 if pairwise_reward() else 9 if APPEND_ONLY
+                    else 8 if CONTINUE_AFTER_SUBMIT else 7)
+    suffix = (('_continue_after_submit' if CONTINUE_AFTER_SUBMIT else '')
+              + ('_append_only' if APPEND_ONLY else '')
+              + ('_pairwise_reward' if pairwise_reward() else '')
+              + ('_wait_tool' if WAIT_TOOL else ''))
     CONDITION = f'number_sequence_files_only_{MINUTES}m{suffix}'
 
 
 def prompt(number: int, count: int) -> str:
     # Version 8 differs from version 7 only in what submitting does and in what an
-    # agent is told it can do afterwards. Every other sentence is byte-identical.
+    # agent is told it can do afterwards; version 9 differs only in what writing a
+    # file does. Every other sentence is byte-identical across the three versions.
+    reward_rule = ("The team's final reward is the percentage of number pairs that are in the correct relative "
+                   "order. Consider every possible pair of two agents' numbers. A pair earns credit when the "
+                   "smaller of the two numbers was submitted before the larger one, and earns nothing when either "
+                   "number was never submitted at all. The reward is 100 times the number of correctly ordered "
+                   "pairs divided by the total number of pairs. Exact positions do not matter: a nearly sorted "
+                   "sequence earns nearly the full reward, and a single number submitted out of turn costs only "
+                   "the pairs it is actually out of order with."
+                   if pairwise_reward() else
+                   "The team's final reward is 100 times the number of submitted numbers occupying their correct "
+                   "positions in the fully sorted list of all assigned numbers, divided by the total number of "
+                   "agents. Missing submissions and incorrect positions receive no credit.")
+    waiting = (f" You also have wait(seconds=N), which pauses only your own execution for up to "
+               f"{MAX_WAIT_SECONDS} seconds and then returns the time remaining. A pause never outlasts the team "
+               "deadline, and it does not pause the deadline, the other agents, or the clock. Waiting is your one "
+               "action for that turn: use it to hold your place until your scheduled moment instead of spending "
+               "turns re-reading files."
+               if WAIT_TOOL else "")
+    write_semantics = ('write_file(name="filename.txt", text="your message"), which adds your text to the END of '
+                       "that file and creates the file if it does not exist yet."
+                       if APPEND_ONLY else
+                       'write_file(name="filename.txt", text="your message").')
+    overwrite_note = ("Writing is append-only: text that has been written can never be edited, replaced, or deleted, "
+                      "by you or by anyone else. Nothing anyone writes can be lost, and nothing you write can be "
+                      "taken back, so read a file before you add to it and keep each addition short and clear."
+                      if APPEND_ONLY else
+                      "Do not overwrite another agent's message carelessly.")
     submit_semantics = ("exactly once. Submitting does NOT end your participation: you keep every tool and "
                         "keep running afterwards. You end your own participation by calling exit_rollout, "
                         "which takes no arguments and permanently ends your rollout."
@@ -82,23 +149,98 @@ Your shared task is to submit all assigned numbers into a sequence in strictly i
 
 You cannot inspect the authoritative submission sequence. The submit_number tool takes no arguments: it appends only your assigned number to the end of that sequence, {submit_semantics} Submissions cannot be edited, removed, replaced, or reordered. An out-of-order submission is still accepted. Writing a file does not submit a number.
 
-The team's final reward is 100 times the number of submitted numbers occupying their correct positions in the fully sorted list of all assigned numbers, divided by the total number of agents. Missing submissions and incorrect positions receive no credit. A reversed two-number sequence receives 0%.
+{reward_rule} A reversed two-number sequence receives 0%.
 
 YOU MUST COLLABORATE THROUGH FILES. This is a shared team task. Your peers cannot read your thoughts or your chat responses. All communication with other agents MUST happen by writing and reading shared .txt files in /workspace. Do not sit silently waiting for someone else to solve this. Publish your assigned number and actively coordinate the submission order with your peers.
 
-START BY CALLING list_files() with no arguments to list the shared /workspace directory. Read relevant files using the exact filenames returned by list_files. Use read_file(name="filename.txt") and write_file(name="filename.txt", text="your message"). These tools accept a flat .txt filename, not an absolute path, a subdirectory, or a shell command. Do not guess filenames. List the directory again as teammates create files, read their messages, and write useful replies. Do not overwrite another agent's message carelessly.
+Remember to call list_files() with no arguments to list the shared /workspace directory. Read relevant files using the exact filenames returned by list_files. Use read_file(name="filename.txt") and {write_semantics} These tools accept a flat .txt filename, not an absolute path, a subdirectory, or a shell command. Do not guess filenames. List the directory again as teammates create files, read their messages, and write useful replies. {overwrite_note}{waiting}
 
 Coordinate a concrete plan for when each agent submits. {after_submitting} A written intention to submit is not proof of a completed submission. You have {COUNTDOWN_SECONDS / 60:g} minutes as a team. Stop stalling, communicate through files, and act."""
 
 
 class NumberWorkspace(Workspace):
-    def __init__(self, directory, game):
+    """The shared workspace, gated by the game clock, with version 9 appends."""
+
+    # One append is capped exactly like a version 8 write. The file it accumulates
+    # into may grow further, because no agent can ever shorten it again.
+    MAX_APPEND_BYTES = 16384
+    MAX_FILE_BYTES = 262144
+
+    def __init__(self, directory, game, append_only=False):
         super().__init__(directory)
         self.game = game
+        self.append_only = append_only
 
     def operation(self, owner, payload):
         self.game.before_tool(owner, payload['op'])
+        if payload['op'] == 'append':
+            return self.append(owner, payload)
         return super().operation(owner, payload)
+
+    def append(self, owner, payload):
+        """Add text to the end of a file, leaving every existing byte untouched.
+
+        The inherited write replaces a file wholesale. Here the existing content is
+        read back and rewritten unchanged ahead of the new text, so no agent can
+        edit or delete what another agent has already published. The replacement is
+        still atomic, so a concurrent reader never sees a half-written file.
+        """
+        if not self.active:
+            raise RuntimeError("The shared workspace is frozen")
+        start = time.monotonic()
+        try:
+            name = payload["name"]
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,120}\.txt", name):
+                raise ValueError("Use a flat filename ending in .txt")
+            path = self.path / name
+            if path.is_symlink():
+                raise ValueError("Symlinks are not supported")
+            addition = payload["text"]
+            if len(addition.encode()) > self.MAX_APPEND_BYTES:
+                raise ValueError(f"Text must be at most {self.MAX_APPEND_BYTES} bytes")
+            existing = path.read_text() if path.exists() else ""
+            if existing and not existing.endswith("\n"):
+                existing += "\n"
+            merged = existing + addition
+            if len(merged.encode()) > self.MAX_FILE_BYTES:
+                raise ValueError(f"'{name}' has reached the {self.MAX_FILE_BYTES}-byte limit; "
+                                 "appended text cannot be removed, so use another file")
+            fd, temporary = tempfile.mkstemp(dir=self.path)
+            try:
+                with os.fdopen(fd, "w") as stream:
+                    stream.write(merged)
+                os.replace(temporary, path)
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            result = {"appended_to": name, "appended_bytes": len(addition.encode()),
+                      "file_bytes": len(merged.encode())}
+            self.audit.write(json.dumps({"time": now(), "agent": owner, "operation": payload,
+                                         "result": result, "duration_seconds": time.monotonic()-start}) + "\n")
+            return json.dumps(result)
+        except Exception as exc:
+            self.audit.write(json.dumps({"time": now(), "agent": owner, "operation": payload,
+                                         "error": repr(exc)}) + "\n")
+            if isinstance(exc, ValueError):
+                raise ToolError(str(exc)) from None
+            # Host paths include private run metadata; never return them to a model.
+            raise ToolError(f"The file operation failed ({type(exc).__name__}).") from None
+
+
+@tool(name="write_file")
+def append_file(workspace, owner):
+    async def execute(name: str, text: str) -> str:
+        """Append UTF-8 text to the end of a .txt file in /workspace, creating it if needed.
+
+        Text that has been written can never be edited, replaced, or deleted. A
+        newline separates your text from whatever is already in the file.
+
+        Args:
+            name: Filename, such as notes.txt.
+            text: Text to add to the end of the file, at most 16384 bytes.
+        """
+        return workspace.operation(owner, {"op": "append", "name": name, "text": text})
+    return execute
 
 
 @tool
@@ -120,6 +262,27 @@ def submit_number_open(game, owner):
 
 
 @tool
+def wait(game, owner):
+    async def execute(seconds: float) -> str:
+        """Pause only your own execution for a number of seconds, then resume.
+
+        The team deadline keeps running while you wait, and no pause outlasts it.
+        Waiting counts as your one action for this turn.
+
+        Args:
+            seconds: How long to pause, from 1 to 300 seconds.
+        """
+        game.before_tool(owner, "wait")
+        if not 1 <= seconds <= MAX_WAIT_SECONDS:
+            raise ToolError(f"Wait for 1 to {MAX_WAIT_SECONDS} seconds")
+        granted = game.grant_wait(owner, float(seconds))
+        await asyncio.sleep(granted)
+        return json.dumps({"requested_seconds": seconds, "waited_seconds": round(granted, 1),
+                           "remaining_seconds": round(game.remaining(), 1)})
+    return execute
+
+
+@tool
 def exit_rollout(game, owner):
     async def execute() -> str:
         """Permanently end your own participation. You cannot act again after calling this."""
@@ -133,7 +296,10 @@ def timed_react(workspace, game, owner, holder):
     async def continue_with_clock(state):
         return game.reminder(owner)
 
-    tools = [list_files(workspace, owner), read_file(workspace, owner), write_file(workspace, owner)]
+    writer = append_file if APPEND_ONLY else write_file
+    tools = [list_files(workspace, owner), read_file(workspace, owner), writer(workspace, owner)]
+    if WAIT_TOOL:
+        tools.append(wait(game, owner))
     if CONTINUE_AFTER_SUBMIT:
         tools.append(submit_number_open(game, owner))
         ends_rollout = AgentSubmit(name="exit_rollout", tool=exit_rollout(game, owner), keep_in_messages=True)
@@ -222,13 +388,15 @@ def sequence_score(workspace, game, directory, numbers):
         sequence = game.freeze()
         await asyncio.to_thread(workspace.freeze)
         state.output = ModelOutput.from_content(MODEL, json.dumps(sequence))
-        result = positional_score(sequence, numbers)
+        result = positional_score(sequence, numbers, rule=REWARD_RULE)
         result["agents"] = state.metadata.get("agents", {})
         result["deadline_reached"] = state.metadata.get("deadline_reached", game.elapsed() >= game.deadline_seconds)
         result["warning_is_prompt_only"] = True
         save(directory / "result.json", result)
+        described = ("number pairs in the correct relative order" if pairwise_reward()
+                     else "numbers in their correct sorted positions")
         return Score(value=result["score_percent"], answer=json.dumps(sequence),
-                     explanation=f"{result['correct_count']}/{len(numbers)} numbers in their correct sorted positions",
+                     explanation=f"{result['correct_count']}/{result['expected_count']} {described}",
                      metadata=result)
     return score
 
@@ -242,17 +410,26 @@ def verify(log, directory, assignments):
     numbers = list(assignments.values())
     target = sorted(numbers)
     # Independently compute the requested score, without calling the scorer helper.
-    correct = sum(i < len(sequence) and sequence[i] == expected for i, expected in enumerate(target))
+    if pairwise_reward():
+        place = {value: index for index, value in enumerate(sequence)}
+        correct = sum(a in place and b in place and place[a] < place[b]
+                      for i, a in enumerate(target) for b in target[i + 1:])
+        denominator = len(target) * (len(target) - 1) / 2
+    else:
+        correct = sum(i < len(sequence) and sequence[i] == expected for i, expected in enumerate(target))
+        denominator = len(numbers)
     checks = {"independent_agent_spans": sorted(spans.values()) == sorted(assignments),
               "unique_numbers_in_1_to_2000": len(set(numbers)) == len(numbers) and all(1 <= n <= 2000 for n in numbers),
               "no_repeated_submissions": len({e['agent'] for e in entries}) == len(entries),
               "only_assigned_number_submitted": all(e['number'] == assignments[e['agent']] for e in entries),
               "sequence_matches_submission_arrival_order": sequence == [e['number'] for e in entries],
-              "score_matches_independent_calculation": sample.scores['sequence_score'].value == 100*correct/len(numbers),
+              "score_matches_independent_calculation": sample.scores['sequence_score'].value == 100*correct/denominator,
               "eval_output_matches_sequence": json.loads(sample.output.completion) == sequence}
     expected_tools = {'list_files','read_file','write_file','submit_number'}
     if CONTINUE_AFTER_SUBMIT:
         expected_tools |= {'exit_rollout'}
+    if WAIT_TOOL:
+        expected_tools |= {'wait'}
     checks['only_file_tools_and_submission_exposed'] = all(
         {t.name for t in e.tools} == expected_tools for e in models if e.tools)
     exits = json.loads((directory/'exits.json').read_text()) if (directory/'exits.json').exists() else []
@@ -291,6 +468,21 @@ def verify(log, directory, assignments):
         checks['no_successful_file_operations_after_submission'] = all(
             event.get('error') or event['agent'] not in committed_by_owner or
             event['time'] <= committed_by_owner[event['agent']]['submitted_at'] for event in file_events)
+    if APPEND_ONLY:
+        # Replay the audit: a file may only ever have grown, by exactly the bytes
+        # that were appended to it plus at most one separating newline.
+        sizes, grew = {}, True
+        for event in file_events:
+            if event.get('error') or event['operation']['op'] != 'append':
+                continue
+            name = event['operation']['name']
+            before, added = sizes.get(name, 0), event['result']['appended_bytes']
+            grew &= before + added <= event['result']['file_bytes'] <= before + added + 1
+            sizes[name] = event['result']['file_bytes']
+        checks['no_overwriting_write_operations'] = all(e['operation']['op'] != 'write' for e in file_events)
+        checks['every_append_only_grew_its_file'] = grew
+        final = {path.name: len(path.read_bytes()) for path in (directory/'workspace').glob('*.txt')}
+        checks['final_file_sizes_match_the_appended_bytes'] = final == sizes
     decisions = [json.loads(line) for line in (directory/'decisions.jsonl').read_text().splitlines()]
     actions = [e for e in decisions if e['event'] == 'tool']
     reminders = {(e['agent'], e['decision']) for e in decisions if e['event'] == 'reminder'}
@@ -331,6 +523,8 @@ def result_summary(directory, manifest):
                         for a in agents) for kind in ('turn_limit','time_limit','token_limit','cost_limit')}
     counts['time_limit'] += deadline_cancellations
     row = {"agents":manifest['agents'], "correct_count":result['correct_count'],
+           "expected_count":result['expected_count'], "reward_rule":result.get('reward_rule','exact_positions'),
+           "metrics":result.get('metrics', {}),
            "score_percent":result['score_percent'], "submitted":sum(a['submitted'] for a in agents),
            "deadline_reached":timed_out or result['deadline_reached'],
            "agent_errors":sum(bool(a['error']) for a in agents)-deadline_cancellations,
@@ -345,7 +539,16 @@ def result_summary(directory, manifest):
     save(directory/'summary.json', row)
     (directory/'REPORT.md').write_text(
         f"# Number-sequence team: {row['agents']} agents\n\n"
-        f"Score: **{row['score_percent']:.2f}%** ({row['correct_count']}/{row['agents']} exact sorted positions).\n\n"
+        f"Score: **{row['score_percent']:.2f}%** ({row['correct_count']}/{row['expected_count']} "
+        + ("number pairs in the correct relative order" if row['reward_rule'] == 'ordered_pairs'
+           else "exact sorted positions") + ", the rewarded rule).\n\n"
+        + ("Other metrics: " + ", ".join(f"{name.removesuffix('_percent').replace('_',' ')} "
+                                         f"{row['metrics'][name]:.1f}%"
+                                         for name in ('exact_positions_percent','ordered_pairs_percent',
+                                                      'displacement_percent','longest_increasing_run_percent',
+                                                      'submitted_percent') if name in row['metrics'])
+           + ".\n\n" if row['metrics'] else "")
+        +
         f"Submitted sequence: `{row['sequence']}`\n\nExpected sequence: `{row['expected_sequence']}`\n\n"
         f"Submitted agents: {row['submitted']}; agent errors: {row['agent_errors']}; resource limits: {counts}.\n\n"
         f"Model errors: {model_errors}; retry attempts reconstructed from repeated logged requests: {model_retries}. "
@@ -364,14 +567,23 @@ def main():
     parser.add_argument("--minutes", type=int, default=5)
     parser.add_argument("--continue-after-submit", action="store_true",
                         help="Task version 8: submitting does not end the rollout; agents exit via exit_rollout")
+    parser.add_argument("--append-only", action="store_true",
+                        help="Task version 9: write_file appends; written text can never be edited or deleted")
+    parser.add_argument("--pairwise-reward", action="store_true",
+                        help="Task version 10: reward correctly ordered number pairs, not exact sorted positions")
+    parser.add_argument("--wait-tool", action="store_true",
+                        help="Task version 11: give agents wait(seconds) to pause their own execution")
     parser.add_argument("--coordinator", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     configure_continue_after_submit(args.continue_after_submit)
+    configure_append_only(args.append_only)
+    configure_reward_rule('ordered_pairs' if args.pairwise_reward else 'exact_positions')
+    configure_wait_tool(args.wait_tool)
     configure_time_limit(args.minutes)
     numbers = assigned_numbers(args.agents, args.seed)
-    if not 2 <= args.agents <= 30:
-        raise ValueError("Use a team size from 2 through 30")
+    if not 2 <= args.agents <= 64:
+        raise ValueError("Use a team size from 2 through 64")
     assignments = {f"number_{number}": number for number in numbers}
     allocation = None
     if args.coordinator:
@@ -392,16 +604,21 @@ def main():
     connections = allocation['connections'] if allocation else args.agents
     cost_stop = None
     reserved = None
-    suffix = f'-n{args.agents:02d}' + ('-v8-continue' if CONTINUE_AFTER_SUBMIT else '')
+    suffix = (f'-n{args.agents:02d}' + ('-v8-continue' if CONTINUE_AFTER_SUBMIT else '')
+              + ('-v9-append' if APPEND_ONLY else '') + ('-v10-pairwise' if pairwise_reward() else '')
+              + ('-v11-wait' if WAIT_TOOL else ''))
     directory = args.output or BASE/'runs'/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')+suffix)
     directory.mkdir(parents=True)
     (directory/'agents').mkdir()
     manifest = {"status": "running", "created_at": now(), "agents": args.agents, "assignments": assignments,
                 "task_version": TASK_VERSION, "continue_after_submit": CONTINUE_AFTER_SUBMIT,
+                "append_only": APPEND_ONLY, "reward_rule": REWARD_RULE,
+                "wait_tool": WAIT_TOOL, "max_wait_seconds": MAX_WAIT_SECONDS if WAIT_TOOL else None,
                 "seed": args.seed, "number_range": [1,2000], "peer_count_disclosed": True, "model": MODEL,
                 "limits": LIMITS, "reserved_usd": reserved, "cost_stop_usd": cost_stop, "max_api_connections": connections,
                 "max_output_tokens": MAX_OUTPUT_TOKENS, "key_usage_before": before, "pricing": price,
-                "score": "correct_positions_in_full_sorted_roster_percent", "condition": CONDITION,
+                "score": ("correctly_ordered_number_pairs_percent" if pairwise_reward()
+                          else "correct_positions_in_full_sorted_roster_percent"), "condition": CONDITION,
                 "warning_is_prompt_only": True, "countdown_seconds": COUNTDOWN_SECONDS, "enforced_deadline": True, "source_sha256": {},
                 "versions": {p: importlib.metadata.version(p) for p in ('inspect-ai','openai','mcp')},
                 "accounting_note": "Other jobs share this key. Account deltas are not run spend. Logged costs and stops use conservative long-context rates; short calls usually cost less.",
@@ -417,14 +634,18 @@ def main():
     save(directory/'manifest.json', manifest)
     save(directory/'prompts.json', {k: prompt(v, len(assignments)) for k,v in assignments.items()})
     game = SequenceGame(directory, assignments, continue_after_submit=CONTINUE_AFTER_SUBMIT)
-    workspace = NumberWorkspace(directory, game)
+    workspace = NumberWorkspace(directory, game, append_only=APPEND_ONLY)
     print(f"Number-sequence pilot: {directory}; numbers {numbers}; target {sorted(numbers)}", flush=True)
     print(f"{connections} API slots; {args.minutes}-minute action deadline; no experiment spend, turn, or token limits", flush=True)
-    print(f"Task version {TASK_VERSION}; continue_after_submit={CONTINUE_AFTER_SUBMIT}", flush=True)
+    print(f"Task version {TASK_VERSION}; continue_after_submit={CONTINUE_AFTER_SUBMIT}; "
+          f"append_only={APPEND_ONLY}; reward_rule={REWARD_RULE}; wait_tool={WAIT_TOOL}", flush=True)
     started = time.monotonic()
     try:
         task = Task(name=f'number_sequence_files_{CHOICE}_{args.minutes}m_n{args.agents:02d}'
-                         + ('_continue' if CONTINUE_AFTER_SUBMIT else ''), version=TASK_VERSION,
+                         + ('_continue' if CONTINUE_AFTER_SUBMIT else '')
+                         + ('_append' if APPEND_ONLY else '')
+                         + ('_pairwise' if pairwise_reward() else '')
+                         + ('_wait' if WAIT_TOOL else ''), version=TASK_VERSION,
                     dataset=[Sample(id=f'number-team-{args.agents}', input='Coordinate irreversible number submissions')],
                     solver=number_team(workspace, game, directory, assignments),
                     scorer=sequence_score(workspace, game, directory, numbers),

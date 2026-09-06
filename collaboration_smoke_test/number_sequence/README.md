@@ -148,6 +148,108 @@ submitting — so a run shows whether the new affordance was used, not merely of
 
 `number_sequence/test_game.py` covers both versions without model calls.
 
+## Task version 9: append-only files
+
+`--append-only` selects task version 9. In versions 7 and 8 `write_file` replaces a
+file wholesale, so any agent can silently erase what a peer published. In version 9
+the same tool, under the same name, adds its text to the end of the file and creates
+the file if it is missing. Nothing that has been written can be edited, replaced, or
+deleted, by its author or by anyone else, so a shared file is a permanent append-only
+log rather than a whiteboard.
+
+```sh
+NUMBER_SEQUENCE_MODEL=glm .venv/bin/python -m number_sequence.run \
+    --agents 16 --minutes 15 --continue-after-submit --append-only
+```
+
+The change is deliberately narrow. A newline separates an addition from whatever
+precedes it. One addition is capped at 16384 bytes, exactly like a version 8 write;
+a whole file may reach 262144 bytes, and a further append is then refused rather
+than truncating anything. Writes remain atomic — a reader never sees a half-written
+file. Two prompt fragments change to match: the sentence naming `write_file` says
+the text is added to the end of the file, and "Do not overwrite another agent's
+message carelessly" becomes a statement that writing is append-only and irreversible.
+Every other sentence is byte-identical to versions 7 and 8.
+
+Version 9 composes with version 8 rather than replacing it: `--append-only` changes
+only what writing does, and `--continue-after-submit` still decides whether
+submitting ends a rollout. Runs are kept apart by a `-v9-append` run-directory
+suffix, an `_append` task-name suffix, an `_append_only` condition suffix, and an
+`append_only` field in the manifest.
+
+Three verification checks are added. `no_overwriting_write_operations` asserts that
+no replacing write reached the workspace at all; `every_append_only_grew_its_file`
+replays the audit log and requires each file to have grown by exactly the appended
+bytes plus at most one separating newline; `final_file_sizes_match_the_appended_bytes`
+compares the frozen workspace against that replay. The swimlane renderer reconstructs
+each file the same way, so a write tooltip still shows the whole file and a diff of
+what the append added.
+
+## Task version 10: pairwise reward
+
+`--pairwise-reward` selects task version 10. Versions 7 to 9 pay only for numbers
+occupying their exact position in the fully sorted roster. Version 10 pays for the
+percentage of number *pairs* submitted in the correct relative order: a pair earns
+credit when the smaller number was submitted before the larger one, and earns
+nothing when either number was never submitted at all.
+
+```sh
+NUMBER_SEQUENCE_MODEL=glm .venv/bin/python -m number_sequence.run \
+    --agents 32 --minutes 15 --continue-after-submit --append-only --pairwise-reward
+```
+
+Exact-position scoring has two properties that make large teams hard to read. Its
+chance level falls as 1/n, so the same score means something different at every
+team size, and a single number arriving early shifts every number behind it and
+zeroes all of them. In the recorded runs a sixteen-agent team scored 25% exact while
+93.8% of its numbers were within one position of correct, and the three
+thirty-two-agent teams scored 31.2 / 28.1 / 25.0 exact while differing widely in how
+sorted they actually were (95.8 / 86.9 / 77.0 correctly ordered pairs).
+
+Pairwise reward fixes both. Its chance level is 50% at every team size, so scores
+compare directly across n, and one displaced number costs only the pairs it is
+genuinely inverted with. Never submitting is still the worst outcome for that agent:
+its number forfeits all n-1 of its pairs. A perfect sequence still scores 100% and a
+reversed two-number sequence still scores 0%.
+
+One prompt paragraph changes: the sentence stating the reward rule. Everything else,
+including the deadline, the tools, and the one-action-per-reminder protocol, is
+byte-identical to versions 7 to 9. **Runs under the two rules are not comparable**,
+because the agents are told the rule and coordinate against it.
+
+`game.diagnostics` computes every metric for every run whatever the rule is —
+exact positions, ordered pairs, displacement, longest increasing run, and the
+submitted fraction — and they are recorded in `result.json`, `summary.json`, and
+`REPORT.md`, so an old run can be rescored under the new rule and vice versa.
+`verify` recomputes the rewarded rule independently of the scorer, and runs are kept
+apart by a `-v10-pairwise` run-directory suffix, a `_pairwise` task-name suffix, a
+`_pairwise_reward` condition suffix, and a `reward_rule` manifest field.
+
+## Task version 11: the wait tool
+
+`--wait-tool` selects task version 11, which adds one tool:
+
+- `wait(seconds)` — pause only the caller's own execution, from 1 to 300 seconds.
+
+Waiting is the caller's single action for that turn, exactly like any other tool.
+The team deadline keeps running while an agent is paused, and no pause outlasts it:
+a request longer than the time left is clamped to the time left, and a request made
+after the deadline is refused like any other action. The response reports the
+requested seconds, the seconds actually waited, and the remaining deadline.
+`decisions.jsonl` records both the request and the grant, because the gap between
+them is the agent misjudging the clock.
+
+This addresses a pattern visible in earlier runs: agents schedule a submission slot
+("I will submit at ~596s") and then have no way to hold that slot except by spending
+turns on repeated `list_files` and `read_file` calls, which is what drives both the
+token cost and the context growth at 32 agents. One agent went further and called
+`exit_rollout` as if it meant "wait", forfeiting its number entirely.
+
+Runs are kept apart by a `-v11-wait` run-directory suffix, a `_wait` task-name
+suffix, a `_wait_tool` condition suffix, and `wait_tool` plus `max_wait_seconds`
+manifest fields. `verify` requires `wait` in the exposed toolset exactly when the
+version enables it.
+
 ## Sequential ten-minute reruns
 
 The user requested one fresh attempt for each previous score below 100%:
