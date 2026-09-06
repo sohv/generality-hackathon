@@ -1,0 +1,166 @@
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task flipped_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=error
+WARNING:__main__:skipping incomplete task flipped_T40 status=error
+WARNING:__main__:skipping incomplete task flipped_T20 status=error
+WARNING:__main__:skipping incomplete task disambiguated_T80 status=error
+WARNING:__main__:skipping incomplete task disambiguated_T40 status=error
+WARNING:__main__:skipping incomplete task disambiguated_T20 status=error
+WARNING:__main__:skipping incomplete task ambiguous_T60 status=error
+WARNING:__main__:skipping incomplete task ambiguous_T40 status=error
+WARNING:__main__:skipping incomplete task ambiguous_T20 status=error
+WARNING:__main__:skipping incomplete task baseline status=error
+WARNING:__main__:skipping incomplete task ambiguous_T20 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task disambiguated_T80 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T60 status=started
+WARNING:__main__:skipping incomplete task disambiguated_T40 status=started
+WARNING:__main__:skipping incomplete task baseline status=started
+WARNING:__main__:skipping incomplete task disambiguated_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T40 status=started
+WARNING:__main__:including no_sandbag_T20 status=started scored=22/22
+WARNING:__main__:including eval_aware_T20 status=started scored=24/24
+WARNING:__main__:including eval_aware_T40 status=started scored=22/22
+WARNING:__main__:including eval_aware_T60 status=started scored=22/22
+WARNING:__main__:including no_sandbag_T80 status=started scored=12/12
+WARNING:__main__:including flipped_T80 status=started scored=12/12
+WARNING:__main__:including ambiguous_T20 status=started scored=24/24
+WARNING:__main__:including no_sandbag_T40 status=started scored=12/12
+WARNING:__main__:including eval_aware_T80 status=started scored=12/12
+WARNING:__main__:including no_sandbag_T60 status=started scored=12/12
+WARNING:__main__:including flipped_T20 status=error scored=24/30
+WARNING:__main__:including disambiguated_T80 status=error scored=24/30
+WARNING:__main__:including disambiguated_T40 status=error scored=24/30
+WARNING:__main__:including disambiguated_T20 status=error scored=25/30
+WARNING:__main__:including ambiguous_T60 status=error scored=24/30
+WARNING:__main__:including ambiguous_T40 status=error scored=29/30
+WARNING:__main__:skipping incomplete task ambiguous_T20 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task disambiguated_T80 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T60 status=started
+WARNING:__main__:skipping incomplete task disambiguated_T40 status=started
+WARNING:__main__:skipping incomplete task baseline status=started
+WARNING:__main__:skipping incomplete task disambiguated_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T40 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T20 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task disambiguated_T80 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T60 status=started
+WARNING:__main__:skipping incomplete task disambiguated_T40 status=started
+WARNING:__main__:skipping incomplete task baseline status=started
+WARNING:__main__:skipping incomplete task disambiguated_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T40 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T20 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task disambiguated_T80 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T60 status=started
+WARNING:__main__:skipping incomplete task disambiguated_T40 status=started
+WARNING:__main__:skipping incomplete task baseline status=started
+WARNING:__main__:skipping incomplete task disambiguated_T20 status=started
+WARNING:__main__:skipping incomplete task ambiguous_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T20 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T80 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T60 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T40 status=started
+WARNING:__main__:skipping incomplete task no_sandbag_T20 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T80 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T60 status=started
+WARNING:__main__:skipping incomplete task eval_aware_T40 status=started
+WARNING:__main__:skipping incomplete task flipped_T60 status=started
+WARNING:__main__:skipping incomplete task flipped_T40 status=started
